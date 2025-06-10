@@ -1,0 +1,42 @@
+mover:
+  name: mpidatamover
+
+directories:
+  zarr: ${SCRATCH}/nested-eagle/v0/data/hrrr.forecast.training.zarr
+  cache: ${SCRATCH}/nested-eagle/v0/data/cache/hrrr-forecast-training
+  logs: ${SCRATCH}/nested-eagle/v0/data/logs/hrrr-forecast-training
+
+source:
+  name: aws_hrrr_archive
+  t0:
+    start: 2015-02-01T00
+    end: 2023-01-31T12
+    freq: 6h
+
+  fhr:
+    start: 6
+    end: 6
+    step: 6
+
+  variables:
+    # Diagnostic
+    - accum_tp
+
+transforms:
+  horizontal_regrid:
+    target_grid_path: ${SCRATCH}/nested-eagle/v0/data/hrrr_15km.nc
+    regridder_kwargs:
+      method: conservative
+      reuse_weights: True
+      filename: ${SCRATCH}/nested-eagle/v0/data/conservative_1059x1799_211x359.nc
+
+target:
+  name: anemoi
+  sort_channels_by_levels: True
+  compute_temporal_residual_statistics: True
+
+  chunks:
+    time: 1
+    variable: -1
+    ensemble: 1
+    cell: -1
