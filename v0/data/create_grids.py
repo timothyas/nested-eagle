@@ -33,7 +33,7 @@ if __name__ == "__main__":
     hds = hrrr.open_sample_dataset(
         dims={"t0": hrrr.t0[0], "fhr": hrrr.fhr[0]},
         open_static_vars=True,
-        cache_dir=f"{store_dir}/../ufs2arco-cache/grid-creation",
+        cache_dir=f"{store_dir}/cache/grid-creation",
     )
     hds = hds.rename({"latitude": "lat", "longitude": "lon"})
 
