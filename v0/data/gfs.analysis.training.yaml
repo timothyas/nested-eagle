@@ -3,11 +3,11 @@ mover:
 
 directories:
   zarr: ${SCRATCH}/nested-eagle/v0/data/gfs.analysis.training.zarr
-  cache: ${SCRATCH}/nested-eagle/v0/data/cache/gfs-analysis-training
-  logs: ${SCRATCH}/nested-eagle/v0/data/logs/gfs-analysis-training
+  cache: ${SCRATCH}/nested-eagle/v0/data/cache/gfs-analysis-training-restart
+  logs: ${SCRATCH}/nested-eagle/v0/data/logs/gfs-analysis-training-restart
 
 source:
-  name: rda_gfs_archive
+  name: gfs_archive
   t0:
     start: 2015-02-01T06
     end: 2023-01-31T18
