@@ -2,15 +2,15 @@ mover:
   name: mpidatamover
 
 directories:
-  zarr: ${SCRATCH}/nested-eagle/v0/data/hrrr.analysis.training.zarr
-  cache: ${SCRATCH}/nested-eagle/v0/data/cache/hrrr-analysis-training
-  logs: ${SCRATCH}/nested-eagle/v0/data/logs/hrrr-analysis-training
+  zarr: ${SCRATCH}/nested-eagle/v0/data/gfs.analysis.zarr
+  cache: ${SCRATCH}/nested-eagle/v0/data/cache/gfs-analysis
+  logs: ${SCRATCH}/nested-eagle/v0/data/logs/gfs-analysis
 
 source:
-  name: aws_hrrr_archive
+  name: gfs_archive
   t0:
     start: 2015-02-01T06
-    end: 2023-01-31T18
+    end: 2024-01-31T18
     freq: 6h
 
   fhr:
@@ -54,24 +54,25 @@ source:
     - 925
     - 1000
 
-transforms:
-  rotate_vectors:
-    vector_pairs:
-      - ["u", "v"]
-      - ["u10", "v10"]
-      - ["u80", "v80"]
+  slices:
+    sel:
+      latitude: [89.9, -89.9]
 
+transforms:
   horizontal_regrid:
-    target_grid_path: ${SCRATCH}/nested-eagle/v0/data/hrrr_15km.nc
+    target_grid_path: ${SCRATCH}/nested-eagle/v0/data/global_one_degree.nc
     regridder_kwargs:
       method: conservative
       reuse_weights: True
-      filename: ${SCRATCH}/nested-eagle/v0/data/conservative_1059x1799_211x359.nc
+      filename: ${SCRATCH}/nested-eagle/v0/data/conservative_719x1440_180x360.nc
 
 target:
   name: anemoi
   sort_channels_by_levels: True
   compute_temporal_residual_statistics: True
+  statistics_period:
+    start: 2015-02-01T06
+    end: 2023-01-31T18
   forcings:
     - cos_latitude
     - sin_latitude

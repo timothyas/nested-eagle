@@ -9,14 +9,18 @@
 #SBATCH --qos=regular
 #SBATCH --account=m4718
 #SBATCH --constraint=cpu
-#SBATCH -t 02:00:00
+#SBATCH -t 04:00:00
 
 module load conda
 conda activate ufs2arco
 export PYTHONPATH=""
 python create_grids.py
 
-srun ufs2arco gfs.analysis.training.yaml --overwrite
-#srun ufs2arco gfs.forecast.training.yaml --overwrite
-#srun ufs2arco hrrr.analysis.training.yaml --overwrite
-#srun ufs2arco hrrr.forecast.training.yaml --overwrite
+srun ufs2arco gfs.analysis.yaml --overwrite
+echo "done with gfs analysis"
+srun ufs2arco gfs.forecast.yaml --overwrite
+echo "done with gfs forecast"
+srun ufs2arco hrrr.analysis.yaml --overwrite
+echo "done with hrrr analysis"
+srun ufs2arco hrrr.forecast.yaml --overwrite
+echo "done with hrrr forecast"

@@ -2,15 +2,15 @@ mover:
   name: mpidatamover
 
 directories:
-  zarr: ${SCRATCH}/nested-eagle/v0/data/hrrr.forecast.training.zarr
-  cache: ${SCRATCH}/nested-eagle/v0/data/cache/hrrr-forecast-training
-  logs: ${SCRATCH}/nested-eagle/v0/data/logs/hrrr-forecast-training
+  zarr: ${SCRATCH}/nested-eagle/v0/data/hrrr.forecast.zarr
+  cache: ${SCRATCH}/nested-eagle/v0/data/cache/hrrr-forecast
+  logs: ${SCRATCH}/nested-eagle/v0/data/logs/hrrr-forecast
 
 source:
   name: aws_hrrr_archive
   t0:
     start: 2015-02-01T00
-    end: 2023-01-31T12
+    end: 2024-01-31T12
     freq: 6h
 
   fhr:
@@ -34,6 +34,9 @@ target:
   name: anemoi
   sort_channels_by_levels: True
   compute_temporal_residual_statistics: True
+  statistics_period:
+    start: 2015-02-01T06
+    end: 2023-01-31T18
 
   chunks:
     time: 1
