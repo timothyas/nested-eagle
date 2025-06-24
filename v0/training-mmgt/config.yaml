@@ -162,15 +162,15 @@ diagnostics:
         - v10
 
 graph:
+  overwrite: False
   nodes:
     hidden:
       node_builder:
         _target_: anemoi.graphs.nodes.StretchedTriNodes
-        lam_resolution: 7 #???
+        lam_resolution: 8 #???
         global_resolution: 5 #???
         reference_node_name: ${graph.data}
         mask_attr_name: cutout_mask
-        margin_radius_km: 11 #???
 
 hardware:
   num_gpus_per_model: 2
@@ -179,6 +179,7 @@ hardware:
     graph: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/
     output: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/training-mmgt-output/
   files:
+    graph: hrrr_15km_8.gfs_1deg_5.pt
     lam_analysis: hrrr.analysis.zarr
     lam_forecast: hrrr.forecast.zarr
     global_analysis: gfs.analysis.zarr
