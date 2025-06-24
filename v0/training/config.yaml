@@ -59,6 +59,7 @@ data:
       - lsm
 
 dataloader:
+  read_group_size: 1
   batch_size:
     training: 1
     validation: 1
