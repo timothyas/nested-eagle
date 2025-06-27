@@ -209,7 +209,7 @@ hardware:
   paths:
     data: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/data
     graph: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/
-    output: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/training-output/
+    output: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/10percent/smswt/
   files:
     lam_analysis: hrrr.analysis.zarr
     lam_forecast: hrrr.forecast.zarr
