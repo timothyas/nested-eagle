@@ -32,6 +32,7 @@ data:
     default: mean-std
     std:
       - accum_tp
+      - sh2
       - q_100
       - q_150
       - q_200
@@ -224,6 +225,7 @@ model:
     - _target_: anemoi.models.layers.bounding.ReluBounding #[0, infinity)
       variables:
       - accum_tp
+      - sh2
       - q_100
       - q_150
       - q_200
