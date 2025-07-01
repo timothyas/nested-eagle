@@ -319,21 +319,21 @@ def main(
             "vmin": 0,
             "vmax": 20,
         },
-        #"2m_temperature": {
-        #    "cmap": "cmo.thermal",
-        #    "vmin": -10,
-        #    "vmax": 30,
-        #},
-        #"10m_wind_speed": {
-        #    "cmap": "cmo.tempo_r",
-        #    "vmin": 0,
-        #    "vmax": 25,
-        #},
-        #"2m_specific_humidity": {
-        #    "cmap": "cmo.rain",
-        #    "vmin": 0,
-        #    "vmax": 0.02,
-        #},
+        "2m_temperature": {
+            "cmap": "cmo.thermal",
+            "vmin": -10,
+            "vmax": 30,
+        },
+        "10m_wind_speed": {
+            "cmap": "cmo.tempo_r",
+            "vmin": 0,
+            "vmax": 20,
+        },
+        "2m_specific_humidity": {
+            "cmap": "cmo.rain",
+            "vmin": 0,
+            "vmax": 0.025,
+        },
     }
 
     logging.info(f"Time Bounds:\n\tt0 = {t0}\n\ttf = {tf}\n")
