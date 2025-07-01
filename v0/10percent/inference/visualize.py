@@ -16,6 +16,8 @@ try:
 except ImportError:
     print("Could not import xmovie, can't use mode='movie'")
 
+from anemoi.datasets import open_dataset as open_anemoi_dataset
+from ufs2arco.utils import expand_anemoi_to_dataset, convert_anemoi_inference
 
 _projection = ccrs.Orthographic(
     central_longitude = -120,
@@ -108,9 +110,9 @@ def nested_scatter(ax, xds, hds, varname, **kwargs):
     ):
 
         p = ax.scatter(
-            xds.longitudes.isel(values=slc),
-            xds.latitudes.isel(values=slc),
-            c=xds[varname].isel(values=slc),
+            xds.longitudes.isel(cell=slc),
+            xds.latitudes.isel(cell=slc),
+            c=xds[varname].isel(cell=slc),
             s=s,
             transform=ccrs.PlateCarree(),
             **kwargs
@@ -124,7 +126,6 @@ def plot_single_timestamp(xds, fig, time, *args, **kwargs):
 
     axs = []
 
-    truthname = [y for y in list(xds.data_vars) if y in ("ERA5", "Replay")][0]
     vtime = xds["time"].isel(time=time).values
     stime = str(vtime)[:13]
 
@@ -132,8 +133,6 @@ def plot_single_timestamp(xds, fig, time, *args, **kwargs):
     cbar_kwargs = kwargs.pop("cbar_kwargs", {})
     extend = kwargs.pop("extend", None)
     t0 = kwargs.pop("t0", "")
-    truth_x = kwargs.pop("truth_x", None)
-    truth_y = kwargs.pop("truth_y", None)
     hds = kwargs.pop("hds", None)
 
     # Create axes
@@ -143,29 +142,26 @@ def plot_single_timestamp(xds, fig, time, *args, **kwargs):
     # Note that this scatter is very slow for movies
     # But... it is the truest comparison to the other plot
     # We could move to datashader eventually
-    p = ax.scatter(
-        truth_x,
-        truth_y,
-        c=xds[truthname].isel(time=time),
-        s=.5,
-        transform=ccrs.PlateCarree(),
-        **kwargs,
-    )
-    # pcolormesh option
-    #p = xds[truthname].isel(time=time).plot(
-    #    ax=ax,
-    #    transform=ccrs.PlateCarree(),
-    #    add_colorbar=False,
-    #    **kwargs,
-    #)
-    ax.set(title="ERA5")
+    if xds.truth.nice_name in ["ERA5", "Replay"]:
+        p = ax.scatter(
+            truth["x"],
+            truth["y"],
+            c=xds.truth.isel(time=time),
+            s=.5,
+            transform=ccrs.PlateCarree(),
+            **kwargs,
+        )
+    else:
+        p = nested_scatter(ax, xds.isel(time=time), hds, "truth", **kwargs)
+
+    ax.set(title=xds.truth.nice_name)
     axs.append(ax)
 
     # Plot model
     ax = fig.add_subplot(1, 2, 2, projection=_projection)
 
-    pp = nested_scatter(ax, xds.isel(time=time), hds, "Prediction: Nested-EAGLE-v0.30k", **kwargs)
-    ax.set(title="Prediction: Nested-EAGLE-v0.30k")
+    pp = nested_scatter(ax, xds.isel(time=time), hds, "prediction", **kwargs)
+    ax.set(title=xds.prediction.nice_name)
     axs.append(ax)
 
     # now the colorbar
@@ -176,7 +172,7 @@ def plot_single_timestamp(xds, fig, time, *args, **kwargs):
     label += f"\nt0: {t0}"
     label += f"\nvalid: {stime}"
     fig.colorbar(
-        p,
+        pp[0],
         ax=axs,
         orientation="horizontal",
         shrink=.8,
@@ -197,17 +193,23 @@ def calc_wind_speed(xds):
         ws = np.sqrt(xds["u10"]**2 + xds["v10"]**2)
     else:
         ws = np.sqrt(xds["10m_u_component_of_wind"]**2 + xds["10m_v_component_of_wind"]**2)
-    ws.attrs["units"] = "m/sec"
+    ws.attrs["units"] = "m/s"
     ws.attrs["long_name"] = "10m Wind Speed"
-    return ws
+    xds["10m_wind_speed"] = ws
 
-def get_truth(name):
+    if "80m_u_component_of_wind" in xds:
+        ws80 = np.sqrt(xds["80m_u_component_of_wind"]**2 + xds["80m_v_component_of_wind"]**2)
+        xds["80m_wind_speed"] = ws80
+        xds["80m_wind_speed"].attrs["units"] = "m/s"
+    return xds
+
+def get_reanalysis(name):
     if name.lower() == "era5":
         url = "gs://weatherbench2/datasets/era5/1959-2023_01_10-wb13-6h-1440x721_with_derived_variables.zarr"
         rename = {}
     elif name.lower() == "replay":
         url = "gs://noaa-ufs-gefsv13replay/ufs-hr1/0.25-degree/03h-freq/zarr/fv3.zarr"
-        rename = {"pfull": "level", "grid_yt": "lat", "grid_xt": "lon"}
+        rename = {"pfull": "level", "grid_yt": "latitude", "grid_xt": "longitude"}
 
     truth = xr.open_zarr(
         url,
@@ -215,8 +217,80 @@ def get_truth(name):
     )
     truth = truth.rename(rename)
     truth.attrs["name"] = name
+    truth["x"], truth["y"] = np.meshgrid(truth["longitude"], truth["latitude"])
     return truth
 
+def get_truth(name, t0, tf):
+    if name in ["era5", "replay"]:
+        truth = get_reanalysis(name)
+    else:
+        data_dir = "/pscratch/sd/t/timothys/nested-eagle/v0/data"
+        ads = open_anemoi_dataset(
+            cutout=[
+                {
+                    "join":
+                    [
+                        f"{data_dir}/hrrr.analysis.zarr",
+                        f"{data_dir}/hrrr.forecast.zarr",
+                    ],
+                },
+                {
+                    "join":
+                    [
+                        f"{data_dir}/gfs.analysis.zarr",
+                        f"{data_dir}/gfs.forecast.zarr",
+                    ],
+                },
+            ],
+            adjust="all",
+            min_distance_km=0,
+        )
+
+
+        start = ads.to_index(date=t0, variable=0)[0]
+        end = ads.to_index(date=tf, variable=0)[0] + 1
+        truth = xr.DataArray(
+            ads[start:end,:,:,:],
+            coords={
+                "time": np.arange(end-start),
+                "variable": np.arange(ads.shape[1]),
+                "ensemble": np.arange(ads.shape[2]),
+                "cell": np.arange(ads.shape[3]),
+            },
+            dims=("time", "variable", "ensemble", "cell"),
+        ).load().squeeze()
+        truth = expand_anemoi_to_dataset(truth, ads.variables)
+        truth["dates"] = xr.DataArray(
+            ads.dates[start:end],
+            dims="time",
+        )
+        truth = truth.swap_dims({"time": "dates"}).drop_vars("time").rename({"dates": "time"})
+
+        for varname, unit in zip(
+            ["t2m", "sh2", "accum_tp", "u10", "v10", "u", "v", "w", "u80", "v80"],
+            ["K", "kg/kg", "kg/m$^2$", "m/s", "m/s", "m/s", "m/s", "m/s", "m/s", "m/s"],
+        ):
+            truth[varname].attrs["units"] = unit
+
+
+    truth = rename_short_to_long(truth)
+    truth = calc_wind_speed(truth)
+    return truth
+
+
+
+def rename_short_to_long(xds):
+
+    rename = {
+        "accum_tp": "total_precipitation_6hr",
+        "t2m": "2m_temperature",
+        "sh2": "2m_specific_humidity",
+        "u10": "10m_u_component_of_wind",
+        "v10": "10m_v_component_of_wind",
+        "u80": "80m_u_component_of_wind",
+        "v80": "80m_v_component_of_wind",
+    }
+    return xds.rename({key: val for key, val in rename.items() if key in xds})
 
 def main(
     read_path,
@@ -238,6 +312,29 @@ def main(
 
     assert mode in ["figure", "movie"]
 
+    plot_options = {
+        "total_precipitation_6hr": get_precip_kwargs(),
+        "80m_wind_speed": {
+            "cmap": "cmo.tempo_r",
+            "vmin": 0,
+            "vmax": 20,
+        },
+        #"2m_temperature": {
+        #    "cmap": "cmo.thermal",
+        #    "vmin": -10,
+        #    "vmax": 30,
+        #},
+        #"10m_wind_speed": {
+        #    "cmap": "cmo.tempo_r",
+        #    "vmin": 0,
+        #    "vmax": 25,
+        #},
+        #"2m_specific_humidity": {
+        #    "cmap": "cmo.rain",
+        #    "vmin": 0,
+        #    "vmax": 0.02,
+        #},
+    }
 
     logging.info(f"Time Bounds:\n\tt0 = {t0}\n\ttf = {tf}\n")
     psl = xr.open_dataset(read_path)
@@ -245,52 +342,24 @@ def main(
     psl = psl.isel(time=slice(None, None, ifreq))
     psl = psl.rename({"longitude": "longitudes", "latitude": "latitudes"})
     psl = psl.set_coords(["longitudes", "latitudes"])
-    psl = psl.rename({
-        "accum_tp": "total_precipitation_6hr",
-        "t2m": "2m_temperature",
-        "u10": "10m_u_component_of_wind",
-        "v10": "10m_v_component_of_wind",
-    })
-
+    psl = psl.rename({"values": "cell"})
+    psl = rename_short_to_long(psl)
+    psl = calc_wind_speed(psl)
+    psl.attrs["nice_name"] = "Prediction: Nested-EAGLE-v0.30k"
 
     hrrr = xr.open_zarr("/pscratch/sd/t/timothys/nested-eagle/v0/data/hrrr.analysis.zarr")
 
     logging.info(f"Ready to make {mode}s with dataset:\n{psl}\n")
 
-    for tname in ["ERA5"]:
+    for tname in ["GFS/HRRR"]: #["ERA5"]:
 
-        truth = get_truth(tname)
-        truth_x, truth_y = np.meshgrid(truth.longitude, truth.latitude)
+        truth = get_truth(tname, t0=t0, tf=tf)
+
         logging.info(f"Retrieved truth = {tname}\n{truth}\n")
-        fig_dir = os.path.join(store_dir, f"{mode}s", f"{truth.name.lower()}-vs-nested")
+        fig_dir = os.path.join(store_dir, f"{mode}s", f"{tname.lower().replace('/','-')}-vs-nested")
         if not os.path.isdir(fig_dir):
             os.makedirs(fig_dir)
             logging.info(f"Created fig_dir: {fig_dir}")
-
-        # Compute this
-        psl["10m_wind_speed"] = calc_wind_speed(psl)
-        truth["10m_wind_speed"] = calc_wind_speed(truth)
-
-        # setup for each variable
-        plot_options = {
-            "total_precipitation_6hr": get_precip_kwargs(),
-            "2m_temperature": {
-                "cmap": "cmo.thermal",
-                "vmin": -10,
-                "vmax": 30,
-            },
-            "10m_wind_speed": {
-                "cmap": "cmo.tempo_r",
-                "vmin": 0,
-                "vmax": 25,
-            },
-           # "sh2": {
-           #     "cmap": "cmo.rain",
-           #     "vmin": 0,
-           #     "vmax": 0.02,
-           # },
-        }
-
 
         for varname, options in plot_options.items():
 
@@ -299,12 +368,13 @@ def main(
                 logging.info(f"\t{key}: {val}")
 
             ds = xr.Dataset({
-                "Prediction: Nested-EAGLE-v0.30k": psl[varname].load(),
+                "prediction": psl[varname].load(),
+                "truth": truth[varname].sel(
+                    time=psl.time.values,
+                ).load(),
             })
-
-            ds[truth.name] = truth[varname].sel(
-                time=ds["Prediction: Nested-EAGLE-v0.30k"].time.values,
-            ).load()
+            ds["prediction"].attrs["nice_name"] = psl.nice_name
+            ds["truth"].attrs["nice_name"] = tname
 
             # Convert to degC
             if varname[:3] == "tmp" or "temperature" in varname:
@@ -316,13 +386,13 @@ def main(
 
             # Convert to mm->m
             if "total_precipitation" in varname and tname == "ERA5":
-                ds["ERA5"] *= 1000
-                ds["ERA5"].attrs["units"] = "m"
+                ds["truth"] *= 1000
+                ds["truth"].attrs["units"] = "m"
 
                 logging.info(f"\tconverted ERA5 {varname} mm -> m")
 
             label = " ".join([x.capitalize() for x in varname.split("_")])
-            ds.attrs["label"] = f"{label} ({ds[truth.name].units})"
+            ds.attrs["label"] = f"{label} ({ds.truth.units})"
 
             # colorbar extension options
             options["extend"], vmin, vmax = get_extend(
@@ -340,8 +410,6 @@ def main(
                 logging.info(f"\ttotal_precipitation hack: setting extend based on upper limit of 50")
 
             options["t0"] = t0
-            options["truth_x"] = truth_x
-            options["truth_y"] = truth_y
             options["hds"] = hrrr
 
             dpi = 300
