@@ -37,27 +37,48 @@ if __name__ == "__main__":
     #    mode="movie",
     #)
 
+    # --- March 2023 AR event
+    ## 12 hour lead
+    #main(
+    #    read_path=f"{inference_dir}/2023-03-09T12.240h.nc",
+    #    store_dir=inference_dir,
+    #    t0="2023-03-09T12",
+    #    tf="2023-03-10T00",
+    #    mode="figure",
+    #)
+
+    ## 1 day lead
     #main(
     #    read_path=f"{inference_dir}/2023-03-09T00.240h.nc",
     #    store_dir=inference_dir,
     #    t0="2023-03-09T00",
-    #    tf="2023-03-19T00",
-    #    mode="movie",
+    #    tf="2023-03-10T00",
+    #    mode="figure",
     #)
 
-    # 3months, starting March 2023
+    ## 2 day lead
+    #main(
+    #    read_path=f"{inference_dir}/2023-03-08T00.240h.nc",
+    #    store_dir=inference_dir,
+    #    t0="2023-03-08T00",
+    #    tf="2023-03-10T00",
+    #    mode="figure",
+    #)
+
+    # --- 10 day lead to show boundary effects
     main(
         read_path=f"{inference_dir}/2023-03-08T00.240h.nc",
         store_dir=inference_dir,
         t0="2023-03-08T00",
-        tf="2023-03-10T00",
+        tf="2023-03-18T00",
         mode="figure",
     )
 
-    main(
-        read_path=f"{inference_dir}/2023-03-08T00.90d.nc",
-        store_dir=inference_dir,
-        t0="2023-03-08T00",
-        tf="2023-06-06T00",
-        mode="movie",
-    )
+    ## --- 3 month rollout, starting March 2023 AR event
+    #main(
+    #    read_path=f"{inference_dir}/2023-03-08T00.90d.nc",
+    #    store_dir=inference_dir,
+    #    t0="2023-03-08T00",
+    #    tf="2023-06-06T00",
+    #    mode="movie",
+    #)
