@@ -4,6 +4,7 @@
 **/training/outputs/
 *.nc
 *.zarr
+*.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
