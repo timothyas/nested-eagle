@@ -5,6 +5,8 @@
 *.nc
 *.zarr
 *.DS_Store
+*.npz
+*.tar.gz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
