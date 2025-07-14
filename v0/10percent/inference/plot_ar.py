@@ -29,13 +29,13 @@ if __name__ == "__main__":
     #    mode="movie",
     #)
 
-    #main(
-    #    read_path=f"{inference_dir}/2023-03-08T00.240h.nc",
-    #    store_dir=inference_dir,
-    #    t0="2023-03-08T00",
-    #    tf="2023-03-18T00",
-    #    mode="movie",
-    #)
+    main(
+        read_path=f"{inference_dir}/2023-03-09T00.240h.nc",
+        store_dir=inference_dir,
+        t0="2023-03-09T00",
+        tf="2023-03-19T00",
+        mode="movie",
+    )
 
     # --- March 2023 AR event
     ## 12 hour lead
@@ -66,13 +66,13 @@ if __name__ == "__main__":
     #)
 
     # --- 10 day lead to show boundary effects
-    main(
-        read_path=f"{inference_dir}/2023-03-08T00.240h.nc",
-        store_dir=inference_dir,
-        t0="2023-03-08T00",
-        tf="2023-03-18T00",
-        mode="figure",
-    )
+    #main(
+    #    read_path=f"{inference_dir}/2023-03-08T00.240h.nc",
+    #    store_dir=inference_dir,
+    #    t0="2023-03-08T00",
+    #    tf="2023-03-18T00",
+    #    mode="figure",
+    #)
 
     ## --- 3 month rollout, starting March 2023 AR event
     #main(

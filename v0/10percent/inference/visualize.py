@@ -414,7 +414,7 @@ def main(
 
             dpi = 300
             width = 10
-            height = 6.5
+            height = 7
             pixelwidth = width*dpi
             pixelheight = height*dpi
 
@@ -443,6 +443,16 @@ def main(
                     dpi=dpi,
                     **options
                 )
-                fname = f"{fig_dir}/{varname}.{t0}.{tf}.mp4"
-                mov.save(fname, progress=True, overwrite_existing=True)
+                fname = f"{fig_dir}/{varname}.{t0}.{tf}.gif"
+                mov.save(
+                    fname,
+                    progress=True,
+                    overwrite_existing=True,
+                    remove_frames=True,
+                    framerate=10,
+                    gif_framerate=10,
+                    remove_movie=False,
+                    gif_palette=True,
+                    gif_scale=["trunc(iw/2)", "trunc(ih/2)"],
+                )
                 logging.info(f"Stored movie at: {fname}\n")
