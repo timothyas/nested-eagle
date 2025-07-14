@@ -14,9 +14,15 @@ However, for nested it doesn't make sense, since a cutoff distance that works
 for the coarse-resolution component wouldn't work for the high-resolution
 subdomain, and vice versa.
 
+
 ## MMGT
 
 All the graph definitions targeted at the multimesh graph transformer type
+Note that I did not play with the `margin_radius_km` parameter, kept it at 11km.
+This changes
+the max threshold used to figure out neighbors, only used for a LAM setup.
+I don't fully understand this parameter, but figured it wasn't worth it until
+it becomes necessary.
 
 * `mmgt`: a recreation of what I had trained, since the yaml has to be written
   differently to use anemoi-graphs standalone.
