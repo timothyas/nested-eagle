@@ -68,3 +68,11 @@ hanging nodes at the poles.
      graduated setup, but it's still about an order of magnitude smaller than the
      multimesh setup.
 
+
+Custom Encoder:
+
+![custom_encoder](custom_encoder.png)
+
+Custom Decoder:
+
+![custom_decoder](custom_decoder.png)
