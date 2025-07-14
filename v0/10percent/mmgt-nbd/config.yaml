@@ -180,7 +180,7 @@ graph:
     data:
       node_builder:
         _target_: anemoi.graphs.nodes.AnemoiDatasetNodes
-        dataset: ${dataloader.training.dataset}
+        dataset: ${dataloader.dataset}
       attributes: ${graph.attributes.nodes}
     hidden:
       node_builder:
