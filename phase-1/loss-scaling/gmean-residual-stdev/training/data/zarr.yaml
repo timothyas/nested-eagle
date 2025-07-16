@@ -25,8 +25,8 @@ diagnostic:
 remapped:
 
 normalizer:
-  default: mean-std
-  std:
+  default: mean-gmrstd
+  gmrstd:
     - total_precipitation_6hr
     - total_column_water
     - specific_humidity_100
@@ -48,11 +48,6 @@ normalizer:
     - sin_latitude
     - cos_longitude
     - sin_longitude
-    - cos_julian_day
-    - sin_julian_day
-    - cos_local_time
-    - sin_local_time
-    - cos_solar_zenith_angle
     - land_sea_mask
 
 imputer:
