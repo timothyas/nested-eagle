@@ -54,47 +54,26 @@ def create_config(
     """
     date_str = date_to_str(date=init_date)
 
-    if main_config.get("lam_data_path", None) is not None:
-        if main_config.get("extract_lam", False):
-            config = {
-                "checkpoint": main_config["checkpoint_path"],
-                "date": date_str,
-                "lead_time": main_config["lead_time"],
-                "input": {
-                    "cutout": {
-                        "lam_0": {"dataset": main_config["lam_data_path"]},
-                        "global": {"dataset": main_config["global_data_path"]},
-                    }
-                },
+    lead_time = main_config.get("lead_time")
+    config = {
+        "checkpoint": main_config["checkpoint_path"],
+        "date": date_str,
+        "lead_time": lead_time,
+        "input": {"dataset": main_config["input_dataset_kwargs"]},
+    }
+    if main_config.get("extract_lam", False):
+        config["output"] = {
+            "extract_lam": {
                 "output": {
-                    "extract_lam": {
-                        "output": {"netcdf": {"path": f"{main_config['output_path']}/lam.nc"}}
-                    }
+                    "netcdf": {
+                        "path": f"{main_config['output_path']}/lam.nc",
+                    },
                 },
-            }
-        else:
-            config = {
-                "checkpoint": main_config["checkpoint_path"],
-                "date": date_str,
-                "lead_time": main_config["lead_time"],
-                "input": {
-                    "cutout": {
-                        "lam_0": {"dataset": main_config["lam_data_path"]},
-                        "global": {"dataset": main_config["global_data_path"]},
-                    }
-                },
-                "output": {"netcdf": f"{main_config['output_path']}/{date_str}.nc"},
-            }
-
-    else:
-        config = {
-            "checkpoint": main_config["checkpoint_path"],
-            "date": date_str,
-            "lead_time": main_config["lead_time"],
-            "input": {
-                "dataset": main_config["input_data_path"],
             },
-            "output": {"netcdf": f"{main_config['output_path']}/{date_str}.{main_config['lead_time']}h.nc"},
+        }
+    else:
+        config["output"] = {
+            "netcdf": f"{main_config['output_path']}/{date_str}.{lead_time}h.nc",
         }
 
     return config
@@ -124,12 +103,13 @@ def run_forecast(
     return
 
 
-def run_inference():
-    if len(sys.argv) != 2:
+def run_inference(config_filename=None):
+    if len(sys.argv) != 2 and config_filename is None:
         raise Exception("Did not get an argument. Usage is:\npython run_inference.py recipe.yaml")
         sys.exit(1)
 
-    config_filename = sys.argv[1]
+    config_filename = sys.argv[1] if config_filename is None else config_filename
+    setup_simple_log()
     main_config = open_yaml_config(config_filename)
 
     dates = pd.date_range(start=main_config["start_date"], end=main_config["end_date"], freq=main_config["freq"])

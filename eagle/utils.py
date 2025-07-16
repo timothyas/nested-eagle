@@ -11,7 +11,10 @@ def open_yaml_config(config_filename: str):
     # expand any environment variables
     for key, val in config.items():
         if "path" in key:
-            config[key] = os.path.expandvars(val)
+            if isinstance(val, str):
+                config[key] = os.path.expandvars(val)
+            else:
+                logger.warning(f"Not expanding environment variables in {key} in config, since it could be many different types")
 
     # if output_path is not created, make it here
     if not os.path.isdir(config["output_path"]):
