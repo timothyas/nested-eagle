@@ -17,7 +17,7 @@ def open_yaml_config(config_filename: str):
                 logger.warning(f"Not expanding environment variables in {key} in config, since it could be many different types")
 
     # if output_path is not created, make it here
-    if not os.path.isdir(config["output_path"]):
+    if "output_path" in config and not os.path.isdir(config["output_path"]):
         logger.info(f"Creating output_path: {config['output_path']}")
         os.makedirs(config["output_path"])
 

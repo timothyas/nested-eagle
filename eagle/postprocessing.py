@@ -1,13 +1,21 @@
-import xarray as xr
-import numpy as np
-import pandas as pd
-import xesmf as xe
-from typing import List, Optional, Tuple, Union
 import yaml
+import logging
 from pathlib import Path
 import sys
 from datetime import datetime
+from typing import List, Optional, Tuple, Union
 
+import xarray as xr
+import numpy as np
+import pandas as pd
+
+import xesmf as xe
+from ufs2arco.utils import convert_anemoi_inference_dataset
+
+from eagle.log import setup_simple_log
+from eagle.utils import open_yaml_config
+
+logger = logging.getLogger("eagle")
 
 def open_raw_inference(path_to_raw_inference: str) -> xr.Dataset:
     """
@@ -19,7 +27,8 @@ def open_raw_inference(path_to_raw_inference: str) -> xr.Dataset:
     Returns:
         xr.Dataset: One initialization of an Anemoi-Inference run.
     """
-    return xr.open_dataset(path_to_raw_inference)
+    xds = xr.open_dataset(path_to_raw_inference, chunks="auto")
+    return convert_anemoi_inference_dataset(xds)
 
 
 def mask_values(
@@ -37,9 +46,9 @@ def mask_values(
         xr.Dataset: Masked dataset containing either LAM only ds or global only (lam missing) ds.
     """
     if area_to_return == "lam":
-        return ds_nested.where(ds_nested["values"] < lam_index, drop=True)
+        return ds_nested.isel(cell=slice(lam_index))
     elif area_to_return == "global":
-        return ds_nested.where(ds_nested["values"] >= lam_index, drop=True)
+        return ds_nested.isel(cell=slice(lam_index, None))
     else:
         raise ValueError("area_to_return must be either 'lam' or 'global'")
 
@@ -50,10 +59,10 @@ def create_2D_grid(
     lcc_info: dict = None,
 ) -> xr.Dataset:
     """
-    Reshape dataset from 1D 'values' dimension to 2D latitude and longitude.
+    Reshape dataset from 1D 'cell' dimension to 2D latitude and longitude.
 
     Args:
-        ds (xr.Dataset): Anemoi dataset with a flattened "values" dimension.
+        ds (xr.Dataset): Anemoi dataset with a flattened "cell" dimension.
         vars_of_interest (List[str]): Variables to reshape.
         lcc_info (dict): Necesary info about LCC configuation.
 
@@ -61,6 +70,7 @@ def create_2D_grid(
         xr.Dataset: Dataset with shape (time, latitude, longitude).
     """
     ds_to_reshape = ds.copy()
+    logger.info(f"ds_to_reshape:\n{ds_to_reshape}")
 
     if lcc_info:
         lat_length = lcc_info["lat_length"]
@@ -75,23 +85,27 @@ def create_2D_grid(
         lons = ds_to_reshape["longitude"][:].values.reshape((lat_length, lon_length))
 
         data_vars = {}
+        dims = {"time": time_length, "level": len(ds_to_reshape["level"]), "y": lat_length, "x": lon_length}
         for v in vars_of_interest:
-            reshaped_var = ds_to_reshape[v].values.reshape(
-                (time_length, lat_length, lon_length)
-            )
-            data_vars[v] = (["time", "y", "x"], reshaped_var)
+
+            these_dims = dims.copy()
+            if "level" not in ds_to_reshape[v].dims:
+                these_dims.pop("level")
+            reshaped_var = ds_to_reshape[v].values.reshape(tuple(these_dims.values()))
+            data_vars[v] = (list(these_dims.keys()), reshaped_var)
 
         reshaped = xr.Dataset(
             data_vars=data_vars, coords={"time": ds_to_reshape["time"].values}
         )
         reshaped["latitude"] = (("y", "x"), lats)
         reshaped["longitude"] = (("y", "x"), lons)
+        reshaped = reshaped.set_coords(["latitude", "longitude"])
 
     else:
         lats = ds_to_reshape.latitude.values
         lons = ds_to_reshape.longitude.values
         sort_index = np.lexsort((lons, lats))
-        ds_to_reshape = ds_to_reshape.isel(values=sort_index)
+        ds_to_reshape = ds_to_reshape.isel(cell=sort_index)
 
         lat_length = len(np.unique(ds_to_reshape.latitude.values))
         lon_length = len(np.unique(ds_to_reshape.longitude.values))
@@ -103,11 +117,14 @@ def create_2D_grid(
         lon_1d = lons[0, :]
 
         data_vars = {}
+        dims = {"time": time_length, "level": len(ds_to_reshape["level"]), "latitude": lat_length, "longitude": lon_length}
         for v in vars_of_interest:
-            reshaped_var = ds_to_reshape[v].values.reshape(
-                (time_length, lat_length, lon_length)
-            )
-            data_vars[v] = (["time", "latitude", "longitude"], reshaped_var)
+
+            these_dims = dims.copy()
+            if "level" not in ds_to_reshape[v].dims:
+                these_dims.pop("level")
+            reshaped_var = ds_to_reshape[v].values.reshape(tuple(these_dims.values()))
+            data_vars[v] = (list(these_dims.keys()), reshaped_var)
 
         reshaped = xr.Dataset(
             data_vars=data_vars, coords={"latitude": lat_1d, "longitude": lon_1d}
@@ -125,60 +142,7 @@ def make_contiguous(
     """
     for var in reshaped.data_vars:
         reshaped[var].data = np.ascontiguousarray(reshaped[var].values)
-    for coord in reshaped.coords:
-        if coord not in reshaped.dims:
-            reshaped = reshaped.assign_coords(
-                {coord: np.ascontiguousarray(reshaped[coord].values)}
-            )
     return reshaped
-
-
-def add_level_dim_for_individual_var(
-    ds: xr.Dataset, var: str, levels: List[int]
-) -> xr.Dataset:
-    """
-    Add level dimensions instead of flattened variables (e.g. geopotential_500, geopotential_800)
-
-    Args:
-        ds (xr.Dataset): Input dataset.
-        var (str): Variable name to process.
-        levels (List[int]): List of levels to process.
-
-    Returns:
-        xr.Dataset: Dataset with added level dimension for the specified variables.
-    """
-    var_level_list = []
-    names_to_drop = []
-
-    for level in levels:
-        var_name = f"{var}_{str(level)}"
-        var_level_list.append(ds[var_name])
-        names_to_drop.append(var_name)
-
-    stacked = xr.concat(var_level_list, dim="level")
-    stacked = stacked.assign_coords(level=levels)
-    ds[var] = stacked
-
-    return ds.drop_vars(names_to_drop)
-
-
-def add_level_dim(
-    ds: xr.Dataset, level_variables: List[str], levels: List[int]
-) -> xr.Dataset:
-    """
-    Wrapper function to add level dimension for all relevant variables.
-
-    Args:
-        ds (xr.Dataset): Input dataset.
-        level_variables (List[str]): List of variables that have levels.
-        levels (List[int]): List of levels to process.
-
-    Returns:
-        xr.Dataset: Dataset with added level dimensions for all variables.
-    """
-    for var in level_variables:
-        ds = add_level_dim_for_individual_var(ds=ds, var=var, levels=levels)
-    return ds
 
 
 def final_steps(ds: xr.Dataset, time: xr.DataArray) -> xr.Dataset:
@@ -192,12 +156,9 @@ def final_steps(ds: xr.Dataset, time: xr.DataArray) -> xr.Dataset:
     Returns:
         xr.Dataset: Dataset with necessary attributes for verification pipelines.
     """
-    ds = ds.assign_coords(time=time)
     ds.attrs["forecast_reference_time"] = str(ds["time"][0].values)
     if {"x", "y"}.issubset(ds.dims):
-        return ds.transpose("time", "level", "y", "x").rename(
-            {"x": "longitude", "y": "latitude"}
-        )
+        return ds.transpose("time", "level", "y", "x")
     elif {"latitude", "longitude"}.issubset(ds.dims):
         return ds.transpose("time", "level", "latitude", "longitude")
 
@@ -275,29 +236,25 @@ def flatten_grid(ds_to_flatten: xr.Dataset, vars_of_interest: List[str]) -> xr.D
     Returns:
         xr.Dataset: Flattened dataset with 'values' dimension.
     """
-    reshaped_lat_lon = np.meshgrid(
-        ds_to_flatten["latitude"].values,
-        ds_to_flatten["longitude"].values,
+    logger.info(f"ds_to_flatten\n{ds_to_flatten}")
+    ds = ds_to_flatten.stack(cell2d=("latitude", "longitude"))
+    ds = ds.dropna(dim="cell2d", subset=[vars_of_interest[0]], how="any")
+
+    ds["cell"] = xr.DataArray(
+        np.arange(len(ds["cell2d"])),
+        coords=ds["cell2d"].coords,
+        dims=ds["cell2d"].dims,
+        attrs={
+            "description": f"logical index for 'cell2d', which is a flattened lon x lat array",
+        },
     )
+    ds = ds.swap_dims({"cell2d": "cell"})
 
-    lats = reshaped_lat_lon[0].transpose().reshape(-1)
-    lons = reshaped_lat_lon[1].transpose().reshape(-1)
-
-    data_vars = {}
-    for v in vars_of_interest:
-        reshaped_array = []
-        for t in range(len(ds_to_flatten["time"].values)):
-            arr = ds_to_flatten[v][t, :].values.reshape(-1)
-            reshaped_array.append(arr)
-        reshaped_array = np.array(reshaped_array)
-        data_vars[v] = (["time", "values"], reshaped_array)
-
-    data_vars["latitude"] = ("values", lats)
-    data_vars["longitude"] = ("values", lons)
-
-    ds = xr.Dataset(data_vars=data_vars)
-
-    return ds.dropna(dim="values", subset=[vars_of_interest[0]], how="any")
+    # For some reason, there's a failure when trying to store this multi-index
+    # it's not needed in Anemoi, so no need to keep it anyway.
+    ds = ds.drop_vars("cell2d")
+    logger.info(f"after:\n{ds}")
+    return ds
 
 
 def combine_lam_w_global(
@@ -313,7 +270,14 @@ def combine_lam_w_global(
     Returns:
         xr.Dataset: Combined dataset.
     """
-    return xr.concat([ds_nested_w_lam_cutout, ds_lam_w_global_res], dim="values")
+    cell = len(ds_lam_w_global_res.cell) + np.arange(len(ds_nested_w_lam_cutout.cell))
+    ds_nested_w_lam_cutout["cell"] = xr.DataArray(
+        cell,
+        coords={"cell": cell},
+    )
+    logger.info(f"cutout\n{ds_nested_w_lam_cutout}")
+    logger.info(f"lam\n{ds_lam_w_global_res}")
+    return xr.concat([ds_nested_w_lam_cutout, ds_lam_w_global_res], dim="cell")
 
 
 def postprocess_lam_only(
@@ -344,9 +308,8 @@ def postprocess_lam_only(
     ds_lam = create_2D_grid(
         ds=ds_lam, vars_of_interest=vars_of_interest, lcc_info=lcc_info
     )
-    ds_lam = add_level_dim(ds=ds_lam, level_variables=level_variables, levels=levels)
+    logger.info(f"after 2D grid: \n {ds_lam}\n")
     ds_lam = final_steps(ds=ds_lam, time=time)
-
     return ds_lam
 
 
@@ -408,11 +371,6 @@ def postprocess_global(
     # go back to 2D again (lots of gynmastics here!!)
     ds_combined = create_2D_grid(ds=ds_combined, vars_of_interest=vars_of_interest)
 
-    # some final postprocessing steps to make the file more user friendly for users/verification
-    ds_combined = add_level_dim(
-        ds=ds_combined, level_variables=level_variables, levels=levels
-    )
-
     ds_combined = final_steps(ds=ds_combined, time=time)
 
     return ds_combined
@@ -469,22 +427,18 @@ def run(
     return
 
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python inference_postprocessing.py <config>")
-        print("Example: python inference_postprocessing.py config.yaml")
-        sys.exit(1)
+def run_postprocessing(config_filename=None):
+    if len(sys.argv) != 2 and config_filename is None:
+        raise Exception("Did not get an argument. Usage is:\npython run_postprocessing.py config.yaml")
 
-    config_path = sys.argv[1]
+    config_filename = sys.argv[1] if config_filename is None else config_filename
+    setup_simple_log()
+    config = open_yaml_config(config_filename)
 
-    with open(config_path, "r") as f:
-        config = yaml.safe_load(f)
+    dates = pd.date_range(start=config["start_date"], end=config["end_date"], freq=config["freq"])
 
-    start_date = config["initializations_to_run"]["start"]
-    end_date = config["initializations_to_run"]["end"]
-    freq = config["initializations_to_run"]["freq"]
+    logger.info(f"Postprocessing inference with initial condition dates:\n{dates}")
 
-    dates = pd.date_range(start=start_date, end=end_date, freq=freq)
     for i in dates:
         run(
             initialization=str(i),

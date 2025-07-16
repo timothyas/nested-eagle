@@ -1,0 +1,58 @@
+# if you are just running 1 initialization, make start==end
+start_date: 2023-03-09T00
+end_date: 2023-03-09T00
+freq: 6h
+
+# index at which the nested ds goes from LAM->global
+lam_index: 75749
+
+# path to raw inference files you want to post process
+raw_inference_files_base_path: ${SCRATCH}/nested-eagle/v0/10percent/mmgt/inference/124b960f-923a-4af6-85d9-2cf0dfa763ce
+
+# this next section helps us to make a LCC grid structured.
+# if not using LCC over CONUS, set to false and ignore lat/lon length.
+# TODO: lat/lon length should be x/y length... for when we have time to be pedantic
+lcc_info:
+  lcc_flag: True
+  lat_length: 211
+  lon_length: 359
+
+# information about global portion of your grid.
+global_info:
+  res: 1
+  lat_min: 20.5
+  lon_min: 225.5
+  lat_max: 52.5
+  lon_max: 299.5
+
+# this next portion lists all variable info out so the script knows what variables to process.
+# can be helpful if you don't care about all variables or levels.
+# it will only process and save out what you list below.
+level_variables:
+  - q
+  - gh
+  - t
+  - u
+  - v
+  - w
+
+levels:
+  - 200
+  - 500
+  - 850
+
+vars_of_interest:
+  - gh
+  #- u
+  #- v
+  #- w
+  - t
+  #- q
+  - sp
+  #- u10
+  #- v10
+  - t2m
+  #- sh2
+  #- u80
+  #- v80
+  #- accum_tp
