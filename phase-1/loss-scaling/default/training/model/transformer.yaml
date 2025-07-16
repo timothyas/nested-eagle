@@ -6,9 +6,7 @@ output_mask: null
 model:
   _target_: anemoi.models.models.encoder_processor_decoder.AnemoiModelEncProcDec
 
-
 # LayerKernels are optionally. If not specified, the default are pytorch.nn.LayerNorm and torch.nn.Linear.
-# TODO: Add to documentation: The query and key norms need to be autocast layer norms if flash attention is used.
 layer_kernels:
   processor:
     LayerNorm:
@@ -49,15 +47,18 @@ layer_kernels:
       #Any arguments to your chosen function go here e.g.
 
 processor:
-  _target_: anemoi.models.layers.processor.GraphTransformerProcessor
+  _target_: anemoi.models.layers.processor.TransformerProcessor
   activation: ${model.activation}
-  trainable_size: ${model.trainable_parameters.hidden2hidden}
-  sub_graph_edge_attributes: ${model.attributes.edges}
   num_layers: 16
   num_chunks: 2
   mlp_hidden_ratio: 4 # GraphTransformer or Transformer only
   num_heads: 16 # GraphTransformer or Transformer only
-  qk_norm: False
+  window_size: 512
+  dropout_p: 0.0 # GraphTransformer
+  attention_implementation: flash_attention # flash_attention, scaled_dot_product_attention
+  qk_norm: False # Transformer and GraphTransformer only
+  softcap: 0.0 # Transformer only
+  use_alibi_slopes: False # Transformer only
   cpu_offload: ${model.cpu_offload}
 
 
@@ -91,7 +92,6 @@ trainable_parameters:
   hidden: 8
   data2hidden: 8
   hidden2data: 8
-  hidden2hidden: 8 # GNN and GraphTransformer Processor only
 
 
 attributes:
