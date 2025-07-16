@@ -29,3 +29,18 @@ source ~/.azure.sh
 conda activate anemoi
 srun --jobid $SLURM_JOBID ~/anemoi-house/slurm2ddp.sh anemoi-training train --config-name=config
 ```
+
+```
+  | Name    | Type                 | Params | Mode
+---------------------------------------------------------
+0 | model   | AnemoiModelInterface | 71.5 M | train
+1 | loss    | WeightedMSELoss      | 0      | train
+2 | metrics | ModuleList           | 0      | train
+---------------------------------------------------------
+71.5 M    Trainable params
+0         Non-trainable params
+71.5 M    Total params
+286.135   Total estimated model params size (MB)
+309       Modules in train mode
+0         Modules in eval mode
+```
