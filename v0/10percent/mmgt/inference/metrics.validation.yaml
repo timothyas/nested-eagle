@@ -1,10 +1,10 @@
 # location of forecasts, with filename convention {t0}.{lead_time}.nc, lead_time is defined below
-forecast_path: ${SCRATCH}/nested-eagle/v0/10percent/mmgt/inference-validation/124b960f-923a-4af6-85d9-2cf0dfa763ce
+forecast_path: ${SCRATCH}/nested-eagle/v0/10percent/mmgt/inference-validation
 lead_time: 240h
 
 # this will eventually have to change if we want to read multiple datasets, e.g. forecast and analysis
 verification_dataset_path: ${SCRATCH}/nested-eagle/v0/data/hrrr.analysis.zarr
-output_path: ${SCRATCH}/nested-eagle/v0/10percent/mmgt/inference-validation/124b960f-923a-4af6-85d9-2cf0dfa763ce
+output_path: ${SCRATCH}/nested-eagle/v0/10percent/mmgt/inference-validation
 
 model_type: nested-lam
 lam_index: 75749
