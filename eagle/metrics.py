@@ -113,7 +113,7 @@ def open_forecast_zarr_dataset(path, t0, levels=None, vars_of_interest=None):
     """This is for non-anemoi forecast datasets, for example HRRR forecast data preprocessed by ufs2arco"""
 
     xds = xr.open_zarr(path, decode_timedelta=True)
-    xds = xds.sel(t0=t0).squeeze()
+    xds = xds.sel(t0=t0).squeeze(drop=True)
     xds["time"] = xr.DataArray(
         [pd.Timestamp(t0) + pd.Timedelta(hours=fhr) for fhr in xds.fhr.values],
         coords=xds.fhr.coords,
@@ -135,11 +135,15 @@ def open_forecast_zarr_dataset(path, t0, levels=None, vars_of_interest=None):
         coords=xds.cell2d.coords,
     )
     xds = xds.swap_dims({"cell2d": "cell"})
-    xds = xds.drop_vars("cell2d")
+    xds = xds.drop_vars(["cell2d", "t0", "valid_time"])
     xds = xds.load()
     return xds
 
 def postprocess(xds):
+
+    t0 = pd.Timestamp(xds["time"][0].values)
+    xds["t0"] = xr.DataArray(t0, coords={"t0": t0})
+    xds = xds.set_coords("t0")
     xds["lead_time"] = xds["time"] - xds["time"][0]
     xds["fhr"] = xr.DataArray(
         xds["lead_time"].values.astype("timedelta64[h]").astype(int),
@@ -230,8 +234,8 @@ def compute_error_metrics():
 
     dates = pd.date_range(config["start_date"], config["end_date"], freq=config["freq"])
 
-    rmse_container = None
-    mae_container = None
+    rmse_container = list()
+    mae_container = list()
     logger.info(f" --- Starting Metrics Computation --- ")
     for t0 in dates:
         st0 = t0.strftime("%Y-%m-%dT%H")
@@ -253,20 +257,16 @@ def compute_error_metrics():
 
         tds = vds.sel(time=fds.time.values).load()
 
-        this_rmse = rmse(target=tds, prediction=fds, weights=latlon_weights)
-        this_mae = mae(target=tds, prediction=fds, weights=latlon_weights)
-
-        if rmse_container is None:
-            rmse_container = this_rmse / len(dates)
-            mae_container = this_mae / len(dates)
-        else:
-            rmse_container += this_rmse/len(dates)
-            mae_container += this_mae/len(dates)
+        rmse_container.append(rmse(target=tds, prediction=fds, weights=latlon_weights))
+        mae_container.append(mae(target=tds, prediction=fds, weights=latlon_weights))
 
         logger.info(f"\tDone with {st0}")
     logger.info(f" --- Done Computing Metrics --- \n")
 
-    logger.info(f" --- Storing Results --- ")
+    logger.info(f" --- Combining & Storing Results --- ")
+    rmse_container = xr.concat(rmse_container, dim="t0")
+    mae_container = xr.concat(mae_container, dim="t0")
+
     rmse_container.to_netcdf(f"{config['output_path']}/rmse.{config['model_type']}.nc")
     mae_container.to_netcdf(f"{config['output_path']}/mae.{config['model_type']}.nc")
     logger.info(f" --- Done Storing Results at {config['output_path']} --- \n")
