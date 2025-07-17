@@ -106,7 +106,6 @@ def run_forecast(
 def run_inference(config_filename=None):
     if len(sys.argv) != 2 and config_filename is None:
         raise Exception("Did not get an argument. Usage is:\npython run_inference.py recipe.yaml")
-        sys.exit(1)
 
     config_filename = sys.argv[1] if config_filename is None else config_filename
     setup_simple_log()
