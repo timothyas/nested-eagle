@@ -72,11 +72,25 @@ def subsample(xds, levels=None, vars_of_interest=None):
     return xds
 
 
-def open_anemoi_dataset(path, levels=None, vars_of_interest=None):
+def open_anemoi_dataset(path, trim_edge=None, levels=None, vars_of_interest=None):
 
     xds = xr.open_zarr(path)
     vds = ufs2arco.utils.expand_anemoi_dataset(xds, "data", xds.attrs["variables"])
-    return subsample(vds, levels, vars_of_interest)
+    for key in ["x", "y"]:
+        if key in xds:
+            vds[key] = xds[key]
+            vds = vds.set_coords(key)
+
+    vds = subsample(vds, levels, vars_of_interest)
+    if trim_edge is not None:
+        assert all(key in xds for key in ("x", "y"))
+        vds["x"].load()
+        vds["y"].load()
+        condx = ( (vds["x"] > trim_edge[0]-1) & (vds["x"] < vds["x"].max().values-trim_edge[1]+1) ).compute()
+        condy = ( (vds["y"] > trim_edge[2]-1) & (vds["y"] < vds["y"].max().values-trim_edge[3]+1) ).compute()
+        vds = vds.where(condx & condy, drop=True)
+
+    return vds
 
 def open_anemoi_inference_dataset(path, model_type, lam_index=None, levels=None, vars_of_interest=None):
 
@@ -197,6 +211,7 @@ def compute_error_metrics():
     # Verification dataset
     vds = open_anemoi_dataset(
         path=config["verification_dataset_path"],
+        trim_edge=config.get("trim_edge", None),
         **subsample_kwargs,
     )
 
@@ -229,6 +244,7 @@ def compute_error_metrics():
                 **subsample_kwargs,
             )
         else:
+
             fds = open_forecast_zarr_dataset(
                 config["forecast_path"],
                 t0=t0,
