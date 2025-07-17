@@ -57,12 +57,84 @@ def get_gridcell_area_weights(xds, unit_mean=True, radius=1, center=np.array([0,
     return area_weight
 
 
-def open_anemoi_dataset(path):
+def subsample(xds, levels=None, vars_of_interest=None):
+    """Subsample vertical levels and variables
+    """
+
+    if levels is not None:
+        xds = xds.sel(level=levels)
+
+    if vars_of_interest is not None:
+        xds = xds[vars_of_interest]
+    else:
+        xds = drop_forcing_vars(xds)
+
+    return xds
+
+
+def open_anemoi_dataset(path, levels=None, vars_of_interest=None):
+
     xds = xr.open_zarr(path)
     vds = ufs2arco.utils.expand_anemoi_dataset(xds, "data", xds.attrs["variables"])
-    vds = drop_forcing_vars(vds)
-    return vds
+    return subsample(vds, levels, vars_of_interest)
 
+def open_anemoi_inference_dataset(path, model_type, lam_index=None, levels=None, vars_of_interest=None):
+
+    xds = xr.open_dataset(path, chunks="auto")
+    xds = ufs2arco.utils.convert_anemoi_inference_dataset(xds)
+    assert model_type in ("nested-lam", "nested-global", "global")
+    if "nested" in model_type:
+        assert lam_index is not None
+        if "lam" in model_type:
+            xds = xds.isel(cell=slice(lam_index))
+        else:
+            xds = xds.isel(cell=slice(lam_index,None))
+            raise NotImplementedError("Need to put in the cutout/regridding stuff for nested-global")
+
+    xds = subsample(xds, levels, vars_of_interest)
+    xds = xds.load()
+    return xds
+
+def open_forecast_zarr_dataset(path, t0, levels=None, vars_of_interest=None):
+    """This is for non-anemoi forecast datasets, for example HRRR forecast data preprocessed by ufs2arco"""
+
+    xds = xr.open_zarr(path, decode_timedelta=True)
+    xds = xds.sel(t0=t0).squeeze()
+    xds["time"] = xr.DataArray(
+        [pd.Timestamp(t0) + pd.Timedelta(hours=fhr) for fhr in xds.fhr.values],
+        coords=xds.fhr.coords,
+    )
+    xds = xds.swap_dims({"fhr": "time"}).drop_vars("fhr")
+    xds = subsample(xds, levels, vars_of_interest)
+
+    # Comparing to anemoi, it's easier to flatten than unpack anemoi
+    # this is
+    if {"x", "y"}.issubset(xds.dims):
+        xds = xds.stack(cell2d=("y", "x"))
+    elif {"longitude", "latitude"}.issubset(xds.dims):
+        xds = xds.stack(cell2d=("latitude", "longitude"))
+    else:
+        raise KeyError("Unclear on the dimensions here")
+
+    xds["cell"] = xr.DataArray(
+        np.arange(len(xds.cell2d)),
+        coords=xds.cell2d.coords,
+    )
+    xds = xds.swap_dims({"cell2d": "cell"})
+    xds = xds.drop_vars("cell2d")
+    xds = xds.load()
+    return xds
+
+def postprocess(xds):
+    xds["lead_time"] = xds["time"] - xds["time"][0]
+    xds["fhr"] = xr.DataArray(
+        xds["lead_time"].values.astype("timedelta64[h]").astype(int),
+        coords=xds.time.coords,
+        attrs={"description": "forecast hour, aka lead time in hours"},
+    )
+    xds = xds.swap_dims({"time": "fhr"}).drop_vars("time")
+    xds = xds.set_coords("lead_time")
+    return xds
 
 def rmse(target, prediction, weights=1.):
     result = {}
@@ -73,9 +145,7 @@ def rmse(target, prediction, weights=1.):
         result[key] = np.sqrt(mse).compute()
 
     xds = xr.Dataset(result)
-    xds["lead_time"] = xds["time"] - xds["time"][0]
-    xds = xds.swap_dims({"time": "lead_time"}).drop_vars("time")
-    return xds
+    return postprocess(xds)
 
 
 def mae(target, prediction, weights=1.):
@@ -87,10 +157,7 @@ def mae(target, prediction, weights=1.):
         result[key] = mae.compute()
 
     xds = xr.Dataset(result)
-    xds["lead_time"] = xds["time"] - xds["time"][0]
-    xds = xds.swap_dims({"time": "lead_time"}).drop_vars("time")
-    return xds
-
+    return postprocess(xds)
 
 
 def compute_error_metrics():
@@ -105,6 +172,8 @@ def compute_error_metrics():
         forecast_path (str): directory containing forecast datasets to compare against a verification dataset. For now, the convention is that, within this directory, each forecast is in a separate netcdf file named as "<initial_date>.<lead_time>.nc", where initial_date = "%Y-%m-%dT%H" and lead_time is defined below
         lead_time (str): a string indicating length, e.g. 240h or 90d, it doesn't matter what format, just make it the same as what was saved during forecast time
         verification_dataset_path (str): path to the zarr verification dataset
+        model_type (str): "nested-lam", "nested-global", or "global"
+        lam_index (int): number of points in nested domain that are dedicated to LAM
         output_path (str): directory to save rmse.nc and mae.nc
         start_date (str): date of first last IC to grab, in %Y-%m-%dTH format
         end_date (str): date of last last IC to grab, in %Y-%m-%dTH format
@@ -117,8 +186,32 @@ def compute_error_metrics():
     config = open_yaml_config(sys.argv[1])
     setup_simple_log()
 
-    vds = open_anemoi_dataset(config["verification_dataset_path"])
-    latlon_weights = get_gridcell_area_weights(vds)
+    # options used for verification and inference datasets
+    model_type = config["model_type"]
+    lam_index = config.get("lam_index", None)
+    subsample_kwargs = {
+        "levels": config.get("levels", None),
+        "vars_of_interest": config.get("vars_of_interest", None),
+    }
+
+    # Verification dataset
+    vds = open_anemoi_dataset(
+        path=config["verification_dataset_path"],
+        **subsample_kwargs,
+    )
+
+    # Area weights
+    if model_type == "global":
+        latlon_weights = get_gridcell_area_weights(vds)
+
+    elif model_type == "nested-lam":
+        latlon_weights = 1. # Assume LAM is equal area
+
+    elif model_type == "lam":
+        latlon_weights = 1. # Assume LAM is equal area
+
+    else:
+        raise NotImplementedError
 
     dates = pd.date_range(config["start_date"], config["end_date"], freq=config["freq"])
 
@@ -127,14 +220,21 @@ def compute_error_metrics():
     logger.info(f" --- Starting Metrics Computation --- ")
     for t0 in dates:
         st0 = t0.strftime("%Y-%m-%dT%H")
-        fds = xr.open_dataset(
-            f"{config['forecast_path']}/{st0}.{config['lead_time']}.nc",
-        )
+        if config.get("from_anemoi", True):
 
-        fds = ufs2arco.utils.convert_anemoi_inference_dataset(fds)
-        fds = drop_forcing_vars(fds)
+            fds = open_anemoi_inference_dataset(
+                f"{config['forecast_path']}/{st0}.{config['lead_time']}.nc",
+                model_type=model_type,
+                lam_index=lam_index,
+                **subsample_kwargs,
+            )
+        else:
+            fds = open_forecast_zarr_dataset(
+                config["forecast_path"],
+                t0=t0,
+                **subsample_kwargs,
+            )
 
-        fds = fds.load()
         tds = vds.sel(time=fds.time.values).load()
 
         this_rmse = rmse(target=tds, prediction=fds, weights=latlon_weights)
@@ -151,6 +251,6 @@ def compute_error_metrics():
     logger.info(f" --- Done Computing Metrics --- \n")
 
     logger.info(f" --- Storing Results --- ")
-    rmse_container.to_netcdf(f"{config['output_path']}/rmse.nc")
-    mae_container.to_netcdf(f"{config['output_path']}/mae.nc")
+    rmse_container.to_netcdf(f"{config['output_path']}/rmse.{config['model_type']}.nc")
+    mae_container.to_netcdf(f"{config['output_path']}/mae.{config['model_type']}.nc")
     logger.info(f" --- Done Storing Results at {config['output_path']} --- \n")

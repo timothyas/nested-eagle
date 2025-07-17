@@ -14,4 +14,5 @@
 module load conda
 conda activate ufs2arco
 
-srun ufs2arco hrrr.forecasts.yaml
+srun ufs2arco data.yaml
+python compute_metrics.py metrics.yaml

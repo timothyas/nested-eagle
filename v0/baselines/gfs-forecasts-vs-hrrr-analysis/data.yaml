@@ -2,12 +2,12 @@ mover:
   name: mpidatamover
 
 directories:
-  zarr: ${SCRATCH}/nested-eagle/v0/baselines/hrrr.forecasts.zarr
-  cache: ${SCRATCH}/nested-eagle/v0/baselines/cache/hrrr-forecasts
-  logs: ${SCRATCH}/nested-eagle/v0/baselines/logs/hrrr-forecasts
+  zarr: ${SCRATCH}/nested-eagle/v0/baselines/gfs-forecasts-vs-hrrr-analysis/gfs.forecasts.zarr
+  cache: ${SCRATCH}/nested-eagle/v0/baselines/gfs-forecasts-vs-hrrr-analysis/cache
+  logs: ${SCRATCH}/nested-eagle/v0/baselines/gfs-forecasts-vs-hrrr-analysis/logs
 
 source:
-  name: aws_hrrr_archive
+  name: gfs_archive
   t0:
     start: 2023-02-01T06
     end: 2024-01-31T18
@@ -42,19 +42,17 @@ source:
     - 500
     - 850
 
-transforms:
-  rotate_vectors:
-    vector_pairs:
-      - ["u", "v"]
-      - ["u10", "v10"]
-      - ["u80", "v80"]
+  slices:
+    sel:
+      latitude: [89.9, -89.9]
 
+transforms:
   horizontal_regrid:
     target_grid_path: ${SCRATCH}/nested-eagle/v0/data/hrrr_15km.nc
     regridder_kwargs:
       method: conservative
       reuse_weights: True
-      filename: ${SCRATCH}/nested-eagle/v0/data/conservative_1059x1799_211x359.nc
+      filename: ${SCRATCH}/nested-eagle/v0/baselines/gfs-forecasts-vs-hrrr-analysis/conservative_weights.nc
 
 target:
   name: base
