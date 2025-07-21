@@ -139,9 +139,9 @@ def open_forecast_zarr_dataset(path, t0, levels=None, vars_of_interest=None):
     xds = xds.load()
     return xds
 
-def postprocess(xds):
+def postprocess(xds, keep_t0=False):
 
-    if "cell" not in xds.dims:
+    if "cell" not in xds.dims or keep_t0:
         t0 = pd.Timestamp(xds["time"][0].values)
         xds["t0"] = xr.DataArray(t0, coords={"t0": t0})
         xds = xds.set_coords("t0")
@@ -166,7 +166,7 @@ def rmse(target, prediction, weights=1.):
     xds = xr.Dataset(result)
     return postprocess(xds)
 
-def spatial_rmse(target, prediction, weights=1.):
+def spatial_rmse(target, prediction, weights=1., keep_t0=False):
     result = {}
     for key in prediction.data_vars:
         se = (target[key] - prediction[key])**2
@@ -175,7 +175,7 @@ def spatial_rmse(target, prediction, weights=1.):
         result[key] = np.sqrt(mse).compute()
 
     xds = xr.Dataset(result)
-    return postprocess(xds)
+    return postprocess(xds, keep_t0)
 
 
 def mae(target, prediction, weights=1.):
@@ -190,7 +190,7 @@ def mae(target, prediction, weights=1.):
     return postprocess(xds)
 
 
-def spatial_mae(target, prediction, weights=1.):
+def spatial_mae(target, prediction, weights=1., keep_t0=False):
     result = {}
     for key in prediction.data_vars:
         ae = np.abs(target[key] - prediction[key])
@@ -199,7 +199,7 @@ def spatial_mae(target, prediction, weights=1.):
         result[key] = mae.compute()
 
     xds = xr.Dataset(result)
-    return postprocess(xds)
+    return postprocess(xds, keep_t0)
 
 
 def compute_error_metrics():
@@ -287,8 +287,8 @@ def compute_error_metrics():
         rmse_container.append(rmse(target=tds, prediction=fds, weights=latlon_weights))
         mae_container.append(mae(target=tds, prediction=fds, weights=latlon_weights))
 
-        this_spatial_rmse = spatial_rmse(target=tds, prediction=fds, weights=latlon_weights)
-        this_spatial_mae = spatial_mae(target=tds, prediction=fds, weights=latlon_weights)
+        this_spatial_rmse = spatial_rmse(target=tds, prediction=fds, weights=latlon_weights, keep_t0=keep_spatial_t0)
+        this_spatial_mae = spatial_mae(target=tds, prediction=fds, weights=latlon_weights, keep_t0=keep_spatial_t0)
 
         if spatial_rmse_container is None:
             spatial_rmse_container = this_spatial_rmse / len(dates)
@@ -313,13 +313,19 @@ def compute_error_metrics():
     mae_container.to_netcdf(f"{config['output_path']}/mae.{config['model_type']}.nc")
 
     if keep_spatial_t0:
+        spatial_rmse_container = xr.concat(spatial_rmse_container, dim="t0")
         fname = f"{config['output_path']}/spatial.rmse.perIC.{config['model_type']}.nc"
     else:
         fname = f"{config['output_path']}/spatial.rmse.{config['model_type']}.nc"
+
     spatial_rmse_container.to_netcdf(fname)
+
     if keep_spatial_t0:
+        spatial_mae_container = xr.concat(spatial_mae_container, dim="t0")
         fname = f"{config['output_path']}/spatial.mae.perIC.{config['model_type']}.nc"
     else:
         fname = f"{config['output_path']}/spatial.mae.{config['model_type']}.nc"
+
     spatial_mae_container.to_netcdf(fname)
+
     logger.info(f" --- Done Storing Results at {config['output_path']} --- \n")
