@@ -141,9 +141,10 @@ def open_forecast_zarr_dataset(path, t0, levels=None, vars_of_interest=None):
 
 def postprocess(xds):
 
-    t0 = pd.Timestamp(xds["time"][0].values)
-    xds["t0"] = xr.DataArray(t0, coords={"t0": t0})
-    xds = xds.set_coords("t0")
+    if "cell" not in xds.dims:
+        t0 = pd.Timestamp(xds["time"][0].values)
+        xds["t0"] = xr.DataArray(t0, coords={"t0": t0})
+        xds = xds.set_coords("t0")
     xds["lead_time"] = xds["time"] - xds["time"][0]
     xds["fhr"] = xr.DataArray(
         xds["lead_time"].values.astype("timedelta64[h]").astype(int),
@@ -165,6 +166,17 @@ def rmse(target, prediction, weights=1.):
     xds = xr.Dataset(result)
     return postprocess(xds)
 
+def spatial_rmse(target, prediction, weights=1.):
+    result = {}
+    for key in prediction.data_vars:
+        se = (target[key] - prediction[key])**2
+        se = weights*se
+        mse = se.mean("ensemble")
+        result[key] = np.sqrt(mse).compute()
+
+    xds = xr.Dataset(result)
+    return postprocess(xds)
+
 
 def mae(target, prediction, weights=1.):
     result = {}
@@ -172,6 +184,18 @@ def mae(target, prediction, weights=1.):
         ae = np.abs(target[key] - prediction[key])
         ae = weights*ae
         mae = ae.mean(["cell", "ensemble"])
+        result[key] = mae.compute()
+
+    xds = xr.Dataset(result)
+    return postprocess(xds)
+
+
+def spatial_mae(target, prediction, weights=1.):
+    result = {}
+    for key in prediction.data_vars:
+        ae = np.abs(target[key] - prediction[key])
+        ae = weights*ae
+        mae = ae.mean("ensemble")
         result[key] = mae.compute()
 
     xds = xr.Dataset(result)
@@ -207,6 +231,7 @@ def compute_error_metrics():
     # options used for verification and inference datasets
     model_type = config["model_type"]
     lam_index = config.get("lam_index", None)
+    keep_spatial_t0 = config.get("keep_spatial_t0", False)
     subsample_kwargs = {
         "levels": config.get("levels", None),
         "vars_of_interest": config.get("vars_of_interest", None),
@@ -236,6 +261,8 @@ def compute_error_metrics():
 
     rmse_container = list()
     mae_container = list()
+    spatial_rmse_container = list() if keep_spatial_t0 else None
+    spatial_mae_container = list() if keep_spatial_t0 else None
     logger.info(f" --- Starting Metrics Computation --- ")
     for t0 in dates:
         st0 = t0.strftime("%Y-%m-%dT%H")
@@ -260,6 +287,21 @@ def compute_error_metrics():
         rmse_container.append(rmse(target=tds, prediction=fds, weights=latlon_weights))
         mae_container.append(mae(target=tds, prediction=fds, weights=latlon_weights))
 
+        this_spatial_rmse = spatial_rmse(target=tds, prediction=fds, weights=latlon_weights)
+        this_spatial_mae = spatial_mae(target=tds, prediction=fds, weights=latlon_weights)
+
+        if spatial_rmse_container is None:
+            spatial_rmse_container = this_spatial_rmse / len(dates)
+            spatial_mae_container = this_spatial_mae / len(dates)
+
+        else:
+            if keep_spatial_t0:
+                spatial_rmse_container.append(this_spatial_rmse)
+                spatial_mae_container.append(this_spatial_mae)
+            else:
+                spatial_rmse_container += this_spatial_rmse / len(dates)
+                spatial_mae_container += this_spatial_mae / len(dates)
+
         logger.info(f"\tDone with {st0}")
     logger.info(f" --- Done Computing Metrics --- \n")
 
@@ -269,4 +311,15 @@ def compute_error_metrics():
 
     rmse_container.to_netcdf(f"{config['output_path']}/rmse.{config['model_type']}.nc")
     mae_container.to_netcdf(f"{config['output_path']}/mae.{config['model_type']}.nc")
+
+    if keep_spatial_t0:
+        fname = f"{config['output_path']}/spatial.rmse.perIC.{config['model_type']}.nc"
+    else:
+        fname = f"{config['output_path']}/spatial.rmse.{config['model_type']}.nc"
+    spatial_rmse_container.to_netcdf(fname)
+    if keep_spatial_t0:
+        fname = f"{config['output_path']}/spatial.mae.perIC.{config['model_type']}.nc"
+    else:
+        fname = f"{config['output_path']}/spatial.mae.{config['model_type']}.nc"
+    spatial_mae_container.to_netcdf(fname)
     logger.info(f" --- Done Storing Results at {config['output_path']} --- \n")
