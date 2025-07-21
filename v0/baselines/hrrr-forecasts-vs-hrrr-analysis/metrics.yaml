@@ -8,6 +8,7 @@ verification_dataset_path: ${SCRATCH}/nested-eagle/v0/data/hrrr.analysis.zarr
 output_path: ${SCRATCH}/nested-eagle/v0/baselines/hrrr-forecasts-vs-hrrr-analysis
 
 model_type: lam
+keep_spatial_t0: True
 vars_of_interest:
   - gh
   - u
