@@ -10,16 +10,25 @@ nodes:
         adjust: all
         min_distance_km: 0
     attributes:
+      cutout_mask:
+        _target_: anemoi.graphs.nodes.attributes.CutOutMask
+      boundary_mask:
+        _target_: anemoi.graphs.nodes.attributes.BooleanNot
+        masks:
+          _target_: anemoi.graphs.nodes.attributes.CutOutMask
       area_weight:
         _target_: anemoi.graphs.nodes.attributes.SphericalAreaWeights
         norm: unit-max
         fill_value: 0
-      cutout_mask:
-        _target_: anemoi.graphs.nodes.attributes.CutOutMask
+      lam_area_weight:
+        _target_: anemoi.graphs.nodes.attributes.MaskedPlanarAreaWeights
+        mask_node_attr_name: cutout_mask
+        norm: unit-max
+
   hidden:
     node_builder:
       _target_: anemoi.graphs.nodes.NPZFileNodes
-      npz_file: "latentx2.combined.npz"
+      npz_file: "latentx2.combined.sorted.npz"
       lat_key: lat
       lon_key: lon
 
@@ -59,7 +68,6 @@ edges:
       _target_: anemoi.graphs.edges.attributes.EdgeDirection
       norm: unit-std
 
-post_processors: []
-# I don't fully understand this option b/c it doesn't solve my problem
-#- _target_: anemoi.graphs.processors.RemoveUnconnectedNodes
-#  nodes_name: data
+post_processors:
+  - _target_: anemoi.graphs.processors.SortEdgeIndexByTargetNodes
+    descending: True  # optional, defaults to true
