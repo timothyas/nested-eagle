@@ -15,7 +15,7 @@ source:
 
   fhr:
     start: 0
-    end: 48
+    end: 240
     step: 6
 
   variables:
