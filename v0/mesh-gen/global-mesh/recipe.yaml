@@ -14,8 +14,7 @@ nodes:
     #  grid: o48
     node_builder:
       _target_: anemoi.graphs.nodes.NPZFileNodes
-      #npz_file: "latent-graduatedx2-4.global1degree.npz"
-      npz_file: "latentx2.global1degree.npz"
+      npz_file: "latentx2.global1degree.sorted.npz"
       lat_key: lat
       lon_key: lon
 
@@ -25,7 +24,7 @@ edges:
   target_name: hidden
   edge_builders:
   - _target_: anemoi.graphs.edges.KNNEdges
-    num_nearest_neighbours: 18
+    num_nearest_neighbours: 4
     source_mask_attr_name: null
     target_mask_attr_name: null
   attributes:
@@ -51,6 +50,6 @@ edges:
       _target_: anemoi.graphs.edges.attributes.EdgeDirection
       norm: unit-std
 
-post_processors: []
-#- _target_: anemoi.graphs.processors.SortEdgeIndexBySourceNodes
-#  descending: True
+post_processors:
+- _target_: anemoi.graphs.processors.SortEdgeIndexBySourceNodes
+  descending: True
