@@ -28,7 +28,7 @@ nodes:
   hidden:
     node_builder:
       _target_: anemoi.graphs.nodes.NPZFileNodes
-      npz_file: "latentx2.combined.sorted.npz"
+      npz_file: "latentx2.spongex1.combined.sorted.npz"
       lat_key: lat
       lon_key: lon
 
@@ -38,7 +38,7 @@ edges:
   target_name: hidden
   edge_builders:
   - _target_: anemoi.graphs.edges.KNNEdges
-    num_nearest_neighbours: 14
+    num_nearest_neighbours: 12
     source_mask_attr_name: null
     target_mask_attr_name: null
 #  - _target_: anemoi.graphs.edges.CutOffEdges
