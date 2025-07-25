@@ -5,20 +5,17 @@ data: "data"
 hidden: "hidden"
 
 nodes:
-  # Data nodes
   data:
     node_builder:
-      _target_: anemoi.graphs.nodes.ZarrDatasetNodes # options: ZarrDatasetNodes, NPZFileNodes
+      _target_: anemoi.graphs.nodes.AnemoiDatasetNodes
       dataset: ${dataloader.dataset}
-    attributes: ${graph.attributes.nodes} # options: l1, l2, unit-max, unit-sum, unit-std
-  # Hidden nodes
+    attributes: ${graph.attributes.nodes}
   hidden:
     node_builder:
       _target_: anemoi.graphs.nodes.NPZFileNodes
       npz_file: ${hardware.paths.graph}/${hardware.files.npz_file}
       lat_key: lat
       lon_key: lon
-
 
 edges:
 # Encoder configuration

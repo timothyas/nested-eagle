@@ -6,7 +6,6 @@
 #SBATCH --nodes=8
 #SBATCH --tasks-per-node=4
 #SBATCH --gpus-per-node=4
-#SBATCH --cpus-per-task=16
 #SBATCH --qos=regular
 #SBATCH --account=m4718
 #SBATCH --constraint=gpu
