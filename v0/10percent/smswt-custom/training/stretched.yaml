@@ -102,8 +102,7 @@ validation_metrics:
 
 variable_groups:
   default: sfc
-  pl:
-    param: [q, t, u, v, w, z]
+  pl: [q, t, u, v, w, z]
 
 metrics:
 - z_500
