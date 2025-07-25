@@ -1,8 +1,7 @@
 # if you are just running 1 initialization, make start==end
-initializations_to_run:
-  start: "2023-03-01T00:00:00"
-  end: "2023-03-01T00:00:00"
-  freq: "6h"
+start_date: "2023-03-01T00:00:00"
+end_date: "2023-03-01T00:00:00"
+freq: "6h"
 
 # index at which the nested ds goes from LAM->global
 lam_index: 75749
