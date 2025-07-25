@@ -13,30 +13,21 @@
 
 module load conda
 conda activate ufs2arco
-export PYTHONPATH=""
-python create_grids.py
+#python create_grids.py
 
-srun ufs2arco gfs.analysis.yaml --overwrite
-echo "done with gfs analysis"
-srun ufs2arco gfs.forecast.yaml --overwrite
-echo "done with gfs forecast"
-srun ufs2arco hrrr.analysis.yaml --overwrite
-echo "done with hrrr analysis"
-srun ufs2arco hrrr.forecast.yaml --overwrite
-echo "done with hrrr forecast"
+srun ufs2arco gfs.yaml --overwrite
+echo "done with gfs data"
+srun ufs2arco hrrr.yaml --overwrite
+echo "done with hrrr"
 
 # Now copy some things over to community
 mywork=$WORK/nested-eagle/v0/data
 mycomm=$COMMUNITY/nested-eagle/v0/data
 mkdir -p $mycomm
-mkdir -p $mycomm/logs/gfs-analysis
-mkdir -p $mycomm/logs/gfs-forecast
-mkdir -p $mycomm/logs/hrrr-analysis
-mkdir -p $mycomm/logs/hrrr-forecast
+mkdir -p $mycomm/logs/gfs
+mkdir -p $mycomm/logs/hrrr
 
-cp -v $mywork/*.nc $mycomm
+#cp -v $mywork/*.nc $mycomm
 cp -v $mywork/*.yaml $mycomm
-cp -v $mywork/logs/gfs-analysis/log.0000.*.out $mycomm/logs/gfs-analysis
-cp -v $mywork/logs/gfs-forecast/log.0000.*.out $mycomm/logs/gfs-forecast
-cp -v $mywork/logs/hrrr-analysis/log.0000.*.out $mycomm/logs/hrrr-analysis
-cp -v $mywork/logs/hrrr-forecast/log.0000.*.out $mycomm/logs/hrrr-forecast
+cp -v $mywork/logs/gfs/log.0000.*.out $mycomm/logs/gfs
+cp -v $mywork/logs/hrrr/log.0000.*.out $mycomm/logs/hrrr
