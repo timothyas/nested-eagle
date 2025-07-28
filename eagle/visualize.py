@@ -24,7 +24,7 @@ except ImportError:
     print("Could not import xmovie, can't use mode='movie'")
 
 from anemoi.datasets import open_dataset as open_anemoi_dataset
-from ufs2arco.utils import expand_anemoi_to_dataset, convert_anemoi_inference
+from ufs2arco.utils import expand_anemoi_dataset
 from eagle.log import setup_simple_log
 
 _projection = ccrs.Orthographic(
@@ -259,12 +259,14 @@ def get_truth(name, t0, tf, trim_lam_edge=None):
             },
             dims=("time", "variable", "ensemble", "cell"),
         ).load().squeeze()
-        truth = expand_anemoi_to_dataset(truth, ads.variables)
+        truth = truth.to_dataset(name="data")
+        truth["latitudes"] = xr.DataArray(ads.latitudes, coords=truth.cell.coords)
+        truth["longitudes"] = xr.DataArray(ads.longitudes, coords=truth.cell.coords)
         truth["dates"] = xr.DataArray(
             ads.dates[start:end],
             dims="time",
         )
-        truth = truth.swap_dims({"time": "dates"}).drop_vars("time").rename({"dates": "time"})
+        truth = expand_anemoi_dataset(truth, "data", ads.variables)
 
         for varname, unit in zip(
             ["t2m", "sh2", "accum_tp", "u10", "v10", "u", "v", "w", "u80", "v80"],
