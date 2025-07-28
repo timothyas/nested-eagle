@@ -26,16 +26,17 @@ srun --jobid $SLURM_JOBID ~/anemoi-house/slurm2ddp.sh anemoi-training train --co
 ```
 
 ```
+
   | Name    | Type                 | Params | Mode
 ---------------------------------------------------------
-0 | model   | AnemoiModelInterface | 65.1 M | train
-1 | loss    | WeightedMSELoss      | 0      | train
-2 | metrics | ModuleList           | 0      | train
+0 | model   | AnemoiModelInterface | 64.7 M | train
+1 | loss    | MSELoss              | 0      | train
+2 | metrics | ModuleDict           | 0      | train
 ---------------------------------------------------------
-65.1 M    Trainable params
+64.7 M    Trainable params
 0         Non-trainable params
-65.1 M    Total params
-260.392   Total estimated model params size (MB)
-244       Modules in train mode
+64.7 M    Total params
+258.641   Total estimated model params size (MB)
+281       Modules in train mode
 0         Modules in eval mode
 ```
