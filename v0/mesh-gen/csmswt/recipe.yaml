@@ -68,6 +68,4 @@ edges:
       _target_: anemoi.graphs.edges.attributes.EdgeDirection
       norm: unit-std
 
-post_processors:
-  - _target_: anemoi.graphs.processors.SortEdgeIndexByTargetNodes
-    descending: True  # optional, defaults to true
+post_processors: []
