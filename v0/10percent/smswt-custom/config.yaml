@@ -75,27 +75,10 @@ dataloader:
   dataset:
     cutout:
       # LAM
-      - join:
-        - dataset: ${hardware.paths.data}/${hardware.files.lam_analysis}
-          set_missing_dates:
-            - 2015-08-02T12:00:00
-            - 2016-10-22T12:00:00
-          trim_edge: [15, 16, 15, 16]
-        - dataset: ${hardware.paths.data}/${hardware.files.lam_forecast}
-          set_missing_dates:
-            - 2015-08-02T12:00:00
-            - 2016-10-22T12:00:00
-          trim_edge: [15, 16, 15, 16]
+      - dataset: ${hardware.paths.data}/${hardware.files.lam_dataset}
+        trim_edge: [15, 16, 15, 16]
       # Global forcing
-      - join:
-        - dataset: ${hardware.paths.data}/${hardware.files.global_analysis}
-          set_missing_dates:
-            - 2015-08-02T12:00:00
-            - 2016-10-22T12:00:00
-        - dataset: ${hardware.paths.data}/${hardware.files.global_forecast}
-          set_missing_dates:
-            - 2015-08-02T12:00:00
-            - 2016-10-22T12:00:00
+      - dataset: ${hardware.paths.data}/${hardware.files.global_dataset}
     adjust: all
     min_distance_km: 0
   training:
@@ -255,10 +238,8 @@ hardware:
   files:
     graph: graph.latentx2.spongex1.12knn.pt
     npz_file: latentx2.spongex1.combined.sorted.npz
-    lam_analysis: hrrr.analysis.zarr
-    lam_forecast: hrrr.forecast.zarr
-    global_analysis: gfs.analysis.zarr
-    global_forecast: gfs.forecast.zarr
+    lam_dataset: hrrr.zarr
+    global_dataset: gfs.zarr
 
 model:
   num_channels: 512 #???
