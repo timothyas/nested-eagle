@@ -15,6 +15,12 @@ from .utils import open_yaml_config
 logger = logging.getLogger("eagle")
 
 
+def get_xy():
+    xds = xr.open_zarr("/pscratch/sd/t/timothys/nested-eagle/v0/data/hrrr.analysis.zarr")
+    return {"x": xds["x"].load(), "y": xds["y"].load()}
+
+_extra_coords = get_xy()
+
 def drop_forcing_vars(xds):
     for key in [
         "cos_julian_day",
@@ -72,44 +78,59 @@ def subsample(xds, levels=None, vars_of_interest=None):
     return xds
 
 
+def trim_xarray_edge(xds, trim_edge):
+    assert all(key in xds for key in ("x", "y"))
+    xds["x"].load()
+    xds["y"].load()
+    condx = ( (xds["x"] > trim_edge[0]-1) & (xds["x"] < xds["x"].max().values-trim_edge[1]+1) ).compute()
+    condy = ( (xds["y"] > trim_edge[2]-1) & (xds["y"] < xds["y"].max().values-trim_edge[3]+1) ).compute()
+    xds = xds.where(condx & condy, drop=True)
+    return xds
+
+
+
 def open_anemoi_dataset(path, trim_edge=None, levels=None, vars_of_interest=None):
 
     xds = xr.open_zarr(path)
     vds = ufs2arco.utils.expand_anemoi_dataset(xds, "data", xds.attrs["variables"])
     for key in ["x", "y"]:
         if key in xds:
-            vds[key] = xds[key]
+            vds[key] = xds[key] if "variable" not in xds[key].dims else xds[key].isel(variable=0, drop=True)
             vds = vds.set_coords(key)
 
     vds = subsample(vds, levels, vars_of_interest)
     if trim_edge is not None:
-        assert all(key in xds for key in ("x", "y"))
-        vds["x"].load()
-        vds["y"].load()
-        condx = ( (vds["x"] > trim_edge[0]-1) & (vds["x"] < vds["x"].max().values-trim_edge[1]+1) ).compute()
-        condy = ( (vds["y"] > trim_edge[2]-1) & (vds["y"] < vds["y"].max().values-trim_edge[3]+1) ).compute()
-        vds = vds.where(condx & condy, drop=True)
-
+        vds = trim_xarray_edge(vds, trim_edge)
     return vds
 
-def open_anemoi_inference_dataset(path, model_type, lam_index=None, levels=None, vars_of_interest=None):
-
-    xds = xr.open_dataset(path, chunks="auto")
-    xds = ufs2arco.utils.convert_anemoi_inference_dataset(xds)
+def open_anemoi_inference_dataset(path, model_type, lam_index=None, levels=None, vars_of_interest=None, trim_edge=None):
     assert model_type in ("nested-lam", "nested-global", "global")
+
+    ids = xr.open_dataset(path, chunks="auto")
+    xds = ufs2arco.utils.convert_anemoi_inference_dataset(ids)
+
     if "nested" in model_type:
         assert lam_index is not None
         if "lam" in model_type:
             xds = xds.isel(cell=slice(lam_index))
+            for key in ["x", "y"]:
+                if key in ids:
+                    xds[key] = ids[key] if "variable" not in ids[key].dims else ids[key].isel(variable=0, drop=True)
+                    xds = xds.set_coords(key)
+                else:
+                    xds[key] = _extra_coords[key]
+                    xds = xds.set_coords(key)
         else:
             xds = xds.isel(cell=slice(lam_index,None))
             raise NotImplementedError("Need to put in the cutout/regridding stuff for nested-global")
 
     xds = subsample(xds, levels, vars_of_interest)
     xds = xds.load()
+    if trim_edge is not None:
+        xds = trim_xarray_edge(xds, trim_edge)
     return xds
 
-def open_forecast_zarr_dataset(path, t0, levels=None, vars_of_interest=None):
+def open_forecast_zarr_dataset(path, t0, levels=None, vars_of_interest=None, trim_edge=None):
     """This is for non-anemoi forecast datasets, for example HRRR forecast data preprocessed by ufs2arco"""
 
     xds = xr.open_zarr(path, decode_timedelta=True)
@@ -137,6 +158,8 @@ def open_forecast_zarr_dataset(path, t0, levels=None, vars_of_interest=None):
     xds = xds.swap_dims({"cell2d": "cell"})
     xds = xds.drop_vars(["cell2d", "t0", "valid_time"])
     xds = xds.load()
+    if trim_edge is not None:
+        xds = trim_xarray_edge(xds, trim_edge)
     return xds
 
 def postprocess(xds, keep_t0=False):
@@ -272,6 +295,7 @@ def compute_error_metrics():
                 f"{config['forecast_path']}/{st0}.{config['lead_time']}.nc",
                 model_type=model_type,
                 lam_index=lam_index,
+                trim_edge=config.get("trim_forecast_edge", None),
                 **subsample_kwargs,
             )
         else:
@@ -279,6 +303,7 @@ def compute_error_metrics():
             fds = open_forecast_zarr_dataset(
                 config["forecast_path"],
                 t0=t0,
+                trim_edge=config.get("trim_forecast_edge", None),
                 **subsample_kwargs,
             )
 

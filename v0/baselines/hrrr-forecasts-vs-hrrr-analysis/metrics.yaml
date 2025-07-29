@@ -5,7 +5,9 @@ from_anemoi: False
 
 # this will eventually have to change if we want to read multiple datasets, e.g. forecast and analysis
 verification_dataset_path: ${SCRATCH}/nested-eagle/v0/data/hrrr.analysis.zarr
-output_path: ${SCRATCH}/nested-eagle/v0/baselines/hrrr-forecasts-vs-hrrr-analysis
+trim_edge: [15, 16, 15, 16]
+trim_forecast_edge: [15, 16, 15, 16]
+output_path: ${SCRATCH}/nested-eagle/v0/baselines/hrrr-forecasts-vs-hrrr-analysis/trimmed
 
 model_type: lam
 keep_spatial_t0: True
