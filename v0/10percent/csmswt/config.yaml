@@ -233,8 +233,8 @@ hardware:
   num_gpus_per_model: 2
   paths:
     data: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/data
-    graph: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/10percent/smswt-custom/
-    output: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/10percent/smswt-custom/
+    graph: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/10percent/csmswt/
+    output: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/10percent/csmswt/
   files:
     graph: graph.latentx2.spongex1.12knn.pt
     npz_file: latentx2.spongex1.combined.sorted.npz
