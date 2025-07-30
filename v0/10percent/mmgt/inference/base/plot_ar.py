@@ -6,7 +6,7 @@ sys.path.append(_nested_eagle)
 from eagle.visualize import main
 
 if __name__ == "__main__":
-    inference_dir = "/pscratch/sd/t/timothys/nested-eagle/v0/10percent/mmgt/inference/124b960f-923a-4af6-85d9-2cf0dfa763ce"
+    inference_dir = "/pscratch/sd/t/timothys/nested-eagle/v0/10percent/mmgt/base/inference"
 
     # 2018
     #main(

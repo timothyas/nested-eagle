@@ -224,8 +224,8 @@ hardware:
   num_gpus_per_model: 2
   paths:
     data: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/data
-    graph: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/10percent/mmgt-nbd/
-    output: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/10percent/mmgt-nbd/
+    graph: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/10percent/mmgt/nbd/
+    output: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/10percent/mmgt/nbd/
   files:
     graph: graph.20knn.pt
     lam_analysis: hrrr.analysis.zarr

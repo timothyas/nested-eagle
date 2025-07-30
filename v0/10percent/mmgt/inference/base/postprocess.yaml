@@ -7,7 +7,7 @@ freq: 6h
 lam_index: 75749
 
 # path to raw inference files you want to post process
-raw_inference_files_base_path: ${SCRATCH}/nested-eagle/v0/10percent/mmgt/inference/124b960f-923a-4af6-85d9-2cf0dfa763ce
+raw_inference_files_base_path: ${SCRATCH}/nested-eagle/v0/10percent/mmgt/base/inference
 
 # this next section helps us to make a LCC grid structured.
 # if not using LCC over CONUS, set to false and ignore lat/lon length.

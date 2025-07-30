@@ -1,8 +1,8 @@
-checkpoint: "/pscratch/sd/t/timothys/nested-eagle/v0/10percent/mmgt/checkpoint/124b960f-923a-4af6-85d9-2cf0dfa763ce/inference-last.ckpt"
+checkpoint: "/pscratch/sd/t/timothys/nested-eagle/v0/10percent/mmgt/base/checkpoint/124b960f-923a-4af6-85d9-2cf0dfa763ce/inference-last.ckpt"
 
-lead_time: 240
+lead_time: 2160
 
-date: 2018-04-05T12
+date: 2023-03-08T00
 
 input:
   dataset:
@@ -17,4 +17,4 @@ input:
     min_distance_km: 0
 
 output:
-    netcdf: "/pscratch/sd/t/timothys/nested-eagle/v0/10percent/mmgt/inference/124b960f-923a-4af6-85d9-2cf0dfa763ce/2018-04-05T12.240h.nc"
+    netcdf: "/pscratch/sd/t/timothys/nested-eagle/v0/10percent/mmgt/base/inference/2023-03-08T00.90d.nc"

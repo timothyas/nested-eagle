@@ -1,4 +1,4 @@
-checkpoint_path: ${SCRATCH}/nested-eagle/v0/10percent/mmgt/checkpoint/124b960f-923a-4af6-85d9-2cf0dfa763ce/inference-last.ckpt
+checkpoint_path: ${SCRATCH}/nested-eagle/v0/10percent/mmgt/base/checkpoint/124b960f-923a-4af6-85d9-2cf0dfa763ce/inference-last.ckpt
 lead_time: 240
 input_dataset_kwargs:
   cutout:
@@ -10,7 +10,7 @@ input_dataset_kwargs:
       - dataset: /pscratch/sd/t/timothys/nested-eagle/v0/data/gfs.forecast.zarr
   adjust: all
   min_distance_km: 0
-output_path: ${SCRATCH}/nested-eagle/v0/10percent/mmgt/inference/124b960f-923a-4af6-85d9-2cf0dfa763ce
+output_path: ${SCRATCH}/nested-eagle/v0/10percent/mmgt/base/inference
 
 start_date: 2023-03-08T00
 end_date: 2023-03-09T12

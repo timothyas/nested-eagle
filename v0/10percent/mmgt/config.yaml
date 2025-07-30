@@ -190,7 +190,7 @@ hardware:
   paths:
     data: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/data
     graph: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/
-    output: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/10percent/mmgt/
+    output: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/10percent/mmgt/base/
   files:
     graph: hrrr_15km_8.gfs_1deg_5.pt
     lam_analysis: hrrr.analysis.zarr
