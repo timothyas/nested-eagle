@@ -113,13 +113,7 @@ def open_anemoi_inference_dataset(path, model_type, lam_index=None, levels=None,
         assert lam_index is not None
         if "lam" in model_type:
             xds = xds.isel(cell=slice(lam_index))
-            for key in ["x", "y"]:
-                if key in ids:
-                    xds[key] = ids[key] if "variable" not in ids[key].dims else ids[key].isel(variable=0, drop=True)
-                    xds = xds.set_coords(key)
-                else:
-                    xds[key] = _extra_coords[key]
-                    xds = xds.set_coords(key)
+
         else:
             xds = xds.isel(cell=slice(lam_index,None))
             raise NotImplementedError("Need to put in the cutout/regridding stuff for nested-global")
@@ -127,6 +121,13 @@ def open_anemoi_inference_dataset(path, model_type, lam_index=None, levels=None,
     xds = subsample(xds, levels, vars_of_interest)
     xds = xds.load()
     if trim_edge is not None:
+        for key in ["x", "y"]:
+            if key in ids:
+                xds[key] = ids[key] if "variable" not in ids[key].dims else ids[key].isel(variable=0, drop=True)
+                xds = xds.set_coords(key)
+            else:
+                xds[key] = _extra_coords[key]
+                xds = xds.set_coords(key)
         xds = trim_xarray_edge(xds, trim_edge)
     return xds
 
