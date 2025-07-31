@@ -88,7 +88,7 @@ def draw_box(ax, hds, trim_lam_edge=None, **kwargs):
     kw = {
         "color": "gray",
         "transform": ccrs.PlateCarree(),
-        "lw": 2,
+        "lw": 1,
         "alpha": .8,
     }
     kw.update(kwargs)
@@ -302,6 +302,7 @@ def main(
     ifreq=1,
     mode="figure", # or movie
     trim_lam_edge=None,
+    name="Nested-EAGLE Prototype",
 ):
     """A note about t0
     In the inference yaml, I think this means "the very first initial condition"... makes sense
@@ -348,7 +349,7 @@ def main(
     psl = psl.rename({"values": "cell"})
     psl = rename_short_to_long(psl)
     psl = calc_wind_speed(psl)
-    psl.attrs["nice_name"] = "Prediction: Nested-EAGLE-v0.30k"
+    psl.attrs["nice_name"] = f"Prediction: {name}"
 
     hrrr = xr.open_zarr("/pscratch/sd/t/timothys/nested-eagle/v0/data/hrrr.analysis.zarr")
 
