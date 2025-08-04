@@ -196,7 +196,7 @@ graph:
     target_name: ${graph.data}
     edge_builders:
     - _target_: anemoi.graphs.edges.KNNEdges
-      num_nearest_neighbours: 6
+      num_nearest_neighbours: 3
       source_mask_attr_name: null
       target_mask_attr_name: null
     attributes: ${graph.attributes.edges}
@@ -234,7 +234,7 @@ hardware:
   paths:
     data: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/data
     graph: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/10percent/csmswt/win4320/
-    output: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/10percent/csmswt/dk06-win4320/
+    output: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/v0/10percent/csmswt/ll10-win4320/
   files:
     graph: graph.latentx2.spongex1.12knn.pt
     npz_file: latentx2.spongex1.combined.sorted.npz
@@ -300,4 +300,4 @@ training:
         v10: 0.1
         accum_tp: 0.025
     node_weights:
-      weight_frac_of_total: 0.5
+      weight_frac_of_total: 0.1
