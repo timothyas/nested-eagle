@@ -163,9 +163,10 @@ def open_forecast_zarr_dataset(path, t0, levels=None, vars_of_interest=None, tri
         xds = trim_xarray_edge(xds, trim_edge)
     return xds
 
-def postprocess(xds, keep_t0=False):
+def postprocess(xds, keep_t0=None):
 
-    if "cell" not in xds.dims or keep_t0:
+    keep_t0 = keep_t0 if keep_t0 is not None else "cell" not in xds.dims
+    if keep_t0:
         t0 = pd.Timestamp(xds["time"][0].values)
         xds["t0"] = xr.DataArray(t0, coords={"t0": t0})
         xds = xds.set_coords("t0")
