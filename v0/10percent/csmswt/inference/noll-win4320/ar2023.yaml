@@ -1,4 +1,4 @@
-checkpoint_path: ${SCRATCH}/nested-eagle/v0/10percent/csmswt/noll-win4320/checkpoint//inference-last.ckpt
+checkpoint_path: ${SCRATCH}/nested-eagle/v0/10percent/csmswt/noll-win4320/checkpoint/ec94b01b-ead2-4b37-b747-f648eb8030b6/inference-last.ckpt
 lead_time: 240
 input_dataset_kwargs:
   cutout:
