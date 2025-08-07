@@ -9,12 +9,12 @@
 #SBATCH --qos=regular
 #SBATCH --account=m4718
 #SBATCH --constraint=cpu
-#SBATCH -t 06:00:00
+#SBATCH -t 01:00:00
 
 conda activate anemoi
 
 # Define the directories to loop through
-directories=("ll20-win4320" "ll30-win4320" "ll40-win4320" "ek24-win4320" "dk06-win4320" "nc1024-win4320")
+directories=("ll10-nc0256-win4320")
 
 # Loop through each directory
 for dir in "${directories[@]}"; do
