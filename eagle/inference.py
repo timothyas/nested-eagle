@@ -122,3 +122,6 @@ def run_inference(config_filename=None):
             main_config=main_config,
         )
         logger.info(f"Done with {d}")
+
+if __name__ == "__main__":
+    run_inference()

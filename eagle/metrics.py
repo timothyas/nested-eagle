@@ -356,3 +356,6 @@ def compute_error_metrics():
     spatial_mae_container.to_netcdf(fname)
 
     logger.info(f" --- Done Storing Results at {config['output_path']} --- \n")
+
+if __name__ == "__main__":
+    compute_error_metrics()
