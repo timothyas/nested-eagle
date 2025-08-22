@@ -21,6 +21,9 @@ source:
   variables:
     - accum_tp
 
+  accum_hrs:
+    accum_tp: 6
+
   slices:
     sel:
       latitude: [89.9, -89.9]

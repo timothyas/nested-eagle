@@ -2,9 +2,9 @@ mover:
   name: mpidatamover
 
 directories:
-  zarr: ${SCRATCH}/nested-eagle/v0/baselines/hrrr-forecasts-vs-aorc/hrrr.forecasts.zarr
-  cache: ${SCRATCH}/nested-eagle/v0/baselines/hrrr-forecasts-vs-aorc/cache
-  logs: ${SCRATCH}/nested-eagle/v0/baselines/hrrr-forecasts-vs-aorc/logs
+  zarr: ${SCRATCH}/nested-eagle/v0/baselines/hrrr-forecasts-vs-aorc/hrrr.forecasts.06h.zarr
+  cache: ${SCRATCH}/nested-eagle/v0/baselines/hrrr-forecasts-vs-aorc/cache/06h
+  logs: ${SCRATCH}/nested-eagle/v0/baselines/hrrr-forecasts-vs-aorc/logs/06h
 
 source:
   name: aws_hrrr_archive
@@ -14,8 +14,8 @@ source:
     freq: 6h
 
   fhr:
-    start: 0
-    end: 48
+    start: 6
+    end: 7
     step: 6
 
   variables:

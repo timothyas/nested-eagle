@@ -66,7 +66,7 @@ def create_config(
             "extract_lam": {
                 "output": {
                     "netcdf": {
-                        "path": f"{main_config['output_path']}/lam.nc",
+                        "path": f"{main_config['output_path']}/{date_str}.{lead_time}h.lam.nc",
                     },
                 },
             },
