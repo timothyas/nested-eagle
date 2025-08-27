@@ -60,6 +60,7 @@ def create_config(
         "date": date_str,
         "lead_time": lead_time,
         "input": {"dataset": main_config["input_dataset_kwargs"]},
+        "runner": main_config.get("runner", "default"),
     }
     if main_config.get("extract_lam", False):
         config["output"] = {

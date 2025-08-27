@@ -1,3 +1,4 @@
+import os
 import yaml
 import logging
 from pathlib import Path
@@ -11,6 +12,7 @@ import pandas as pd
 
 import xesmf as xe
 from ufs2arco.utils import convert_anemoi_inference_dataset
+from ufs2arco.transforms.horizontal_regrid import get_bounds
 
 from eagle.log import setup_simple_log
 from eagle.utils import open_yaml_config
@@ -55,7 +57,6 @@ def mask_values(
 
 def create_2D_grid(
     ds: xr.Dataset,
-    vars_of_interest: List[str],
     lcc_info: dict = None,
 ) -> xr.Dataset:
     """
@@ -63,7 +64,6 @@ def create_2D_grid(
 
     Args:
         ds (xr.Dataset): Anemoi dataset with a flattened "cell" dimension.
-        vars_of_interest (List[str]): Variables to reshape.
         lcc_info (dict): Necesary info about LCC configuation.
 
     Returns:
@@ -86,7 +86,7 @@ def create_2D_grid(
 
         data_vars = {}
         dims = {"time": time_length, "level": len(ds_to_reshape["level"]), "y": lat_length, "x": lon_length}
-        for v in vars_of_interest:
+        for v in ds_to_reshape.data_vars:
 
             these_dims = dims.copy()
             if "level" not in ds_to_reshape[v].dims:
@@ -118,7 +118,7 @@ def create_2D_grid(
 
         data_vars = {}
         dims = {"time": time_length, "level": len(ds_to_reshape["level"]), "latitude": lat_length, "longitude": lon_length}
-        for v in vars_of_interest:
+        for v in ds_to_reshape.data_vars:
 
             these_dims = dims.copy()
             if "level" not in ds_to_reshape[v].dims:
@@ -163,7 +163,7 @@ def final_steps(ds: xr.Dataset, time: xr.DataArray) -> xr.Dataset:
         return ds.transpose("time", "level", "latitude", "longitude")
 
 
-def regrid_ds(ds_to_regrid: xr.Dataset, ds_out: xr.Dataset) -> xr.Dataset:
+def regrid_ds(ds_to_regrid: xr.Dataset, ds_out: xr.Dataset, weights_filename: str | None = None) -> xr.Dataset:
     """
     Regrid a dataset.
 
@@ -174,13 +174,46 @@ def regrid_ds(ds_to_regrid: xr.Dataset, ds_out: xr.Dataset) -> xr.Dataset:
     Returns:
         xr.Dataset: Regridded dataset.
     """
+    rename = {"latitude": "lat", "longitude": "lon"}
+    dorename = False
+    for key, val in rename.items():
+        if key in ds_to_regrid:
+            dorename = True
+            ds_to_regrid = ds_to_regrid.rename({key: val})
+        if key in ds_out:
+            ds_out = ds_out.rename({key: val})
+
+
+    ds_to_regrid = get_bounds(ds_to_regrid)
+    ds_out = get_bounds(ds_out)
+
+    rename_bounds = {"x_vertices": "x_b", "y_vertices": "y_b"}
+    for key, val in rename_bounds.items():
+        if key in ds_to_regrid:
+            ds_to_regrid = ds_to_regrid.rename({key: val})
+
+    ds_to_regrid = make_contiguous(ds_to_regrid)
+
+    print(f"ds_in\n{ds_to_regrid}\n\n ---->\nds_out\n{ds_out}\n")
+
+    reuse_weights = False
+    if weights_filename is not None:
+        if os.path.isfile(weights_filename):
+            reuse_weights = True
+
     regridder = xe.Regridder(
         ds_to_regrid,
         ds_out,
-        method="bilinear",
+        method="conservative",
         unmapped_to_nan=True,  # this makes sure anything out of conus is nan instead of zero when regridding conus only
+        filename=weights_filename,
+        reuse_weights=reuse_weights,
     )
-    return regridder(ds_to_regrid)
+    result = regridder(ds_to_regrid)
+    if dorename:
+        for val, key in rename.items():
+            result = result.rename({key: val})
+    return result
 
 
 def get_conus_ds_out(
@@ -223,7 +256,7 @@ def get_conus_ds_out(
     )
 
 
-def flatten_grid(ds_to_flatten: xr.Dataset, vars_of_interest: List[str]) -> xr.Dataset:
+def flatten_grid(ds_to_flatten: xr.Dataset) -> xr.Dataset:
     """
     Flatten a 2D lat-lon gridded dataset back to a 1D 'values' coordinate.
     This is necessary to eventually combine global and conus back together
@@ -231,14 +264,13 @@ def flatten_grid(ds_to_flatten: xr.Dataset, vars_of_interest: List[str]) -> xr.D
 
     Args:
         ds_to_flatten (xr.Dataset): Dataset with 2D lat/lon grid.
-        vars_of_interest (List[str]): Variables to flatten.
 
     Returns:
         xr.Dataset: Flattened dataset with 'values' dimension.
     """
     logger.info(f"ds_to_flatten\n{ds_to_flatten}")
     ds = ds_to_flatten.stack(cell2d=("latitude", "longitude"))
-    ds = ds.dropna(dim="cell2d", subset=[vars_of_interest[0]], how="any")
+    ds = ds.dropna(dim="cell2d", how="any")
 
     ds["cell"] = xr.DataArray(
         np.arange(len(ds["cell2d"])),
@@ -275,6 +307,8 @@ def combine_lam_w_global(
         cell,
         coords={"cell": cell},
     )
+    ds_nested_w_lam_cutout.to_netcdf("global_cutout.nc")
+    ds_lam_w_global_res.to_netcdf("lam_lowres.nc")
     logger.info(f"cutout\n{ds_nested_w_lam_cutout}")
     logger.info(f"lam\n{ds_lam_w_global_res}")
     return xr.concat([ds_nested_w_lam_cutout, ds_lam_w_global_res], dim="cell")
@@ -283,8 +317,6 @@ def combine_lam_w_global(
 def postprocess_lam_only(
     ds_nested: xr.Dataset,
     lam_index: int,
-    vars_of_interest: List[str],
-    level_variables: List[str],
     levels: List[int],
     lcc_info: bool,
 ) -> xr.Dataset:
@@ -294,8 +326,6 @@ def postprocess_lam_only(
     Args:
         ds_nested (xr.Dataset): Nested dataset.
         lam_index (int): Index where nested ds transitions from LAM->global.
-        vars_of_interest (List[str]): All variables to process.
-        level_variables (List[str]): Variables that have levels.
         levels (List[int]): List of levels to process.
         lcc_info (bool): Flag if lcc_flag grid (e.g. HRRR).
 
@@ -306,7 +336,7 @@ def postprocess_lam_only(
 
     ds_lam = mask_values(area_to_return="lam", ds_nested=ds_nested, lam_index=lam_index)
     ds_lam = create_2D_grid(
-        ds=ds_lam, vars_of_interest=vars_of_interest, lcc_info=lcc_info
+        ds=ds_lam, lcc_info=lcc_info
     )
     logger.info(f"after 2D grid: \n {ds_lam}\n")
     ds_lam = final_steps(ds=ds_lam, time=time)
@@ -316,11 +346,9 @@ def postprocess_lam_only(
 def postprocess_global(
     ds_nested: xr.Dataset,
     lam_index: int,
-    vars_of_interest: List[str],
-    level_variables: List[str],
-    levels: List[int],
     lcc_info: dict,
     global_info: dict,
+    weights_filename: str = "conservative_weights.nc",
 ) -> xr.Dataset:
     """
     Postprocess global data.
@@ -329,9 +357,6 @@ def postprocess_global(
     Args:
         ds_nested (xr.Dataset): Nested dataset.
         lam_index (int): Index where nested ds transitions from LAM->global.
-        vars_of_interest (List[str]): All variables to process.
-        level_variables (List[str]): Variables that have levels.
-        levels (List[int]): List of levels to process.
         lcc_info (dict): Necessary information for a LCC grid.
         lcc_info (dict): Necessary information for the global grid.
 
@@ -346,21 +371,23 @@ def postprocess_global(
         area_to_return="global", ds_nested=ds_nested, lam_index=lam_index
     )
 
-    # take lam from 1D to 2D (values dim -> lat/lon or x/y dims)
-    lam_ds = create_2D_grid(
-        ds=lam_ds, vars_of_interest=vars_of_interest, lcc_info=lcc_info
-    )
+    ## take lam from 1D to 2D (values dim -> lat/lon or x/y dims)
+    #lam_ds = create_2D_grid(
+    #    ds=lam_ds, lcc_info=lcc_info
+    #)
 
-    # create blank grid over conus that matches global resolution
-    ds_out_conus = get_conus_ds_out(global_ds, lam_ds, global_info=global_info)
+    ## create blank grid over conus that matches global resolution
+    #ds_out_conus = get_conus_ds_out(global_ds, lam_ds, global_info=global_info)
 
     # regrid lam to match global resolution
-    lam_ds_regridded = regrid_ds(ds_to_regrid=lam_ds, ds_out=ds_out_conus)
+    lam_ds_regridded = regrid_ds(ds_to_regrid=lam_ds, ds_out=global_ds.coords.to_dataset(), weights_filename=weights_filename)
+    global_ds.to_netcdf("global.nc")
+    lam_ds_regridded.to_netcdf("lam.global.nc")
 
     # flatten regridded lam back to 1D (lat/lon dims -> values dim)
     # necessary to concat it back to global grid
     ds_lam_regridded_flattened = flatten_grid(
-        ds_to_flatten=lam_ds_regridded, vars_of_interest=vars_of_interest
+        ds_to_flatten=lam_ds_regridded,
     )
 
     # combine global ds and regridded lam ds together
@@ -369,9 +396,10 @@ def postprocess_global(
     )
 
     # go back to 2D again (lots of gynmastics here!!)
-    ds_combined = create_2D_grid(ds=ds_combined, vars_of_interest=vars_of_interest)
+    ds_combined = create_2D_grid(ds=ds_combined)
 
     ds_combined = final_steps(ds=ds_combined, time=time)
+    ds_combined.to_netcdf("combined.nc")
 
     return ds_combined
 
@@ -385,7 +413,6 @@ def run(
 
     """
     vars_of_interest = config["vars_of_interest"]
-    level_variables = config["level_variables"]
     levels = config["levels"]
     lam_index = config["lam_index"]
     lcc_info = config["lcc_info"]
@@ -398,12 +425,11 @@ def run(
     ds_nested = open_raw_inference(
         path_to_raw_inference=f"{raw_inference_files_base_path}/{file_name}.nc"
     )
+    ds_nested = ds_nested[vars_of_interest]
 
     lam_ds = postprocess_lam_only(
         ds_nested=ds_nested,
         lam_index=lam_index,
-        vars_of_interest=vars_of_interest,
-        level_variables=level_variables,
         levels=levels,
         lcc_info=lcc_info,
     )
@@ -413,8 +439,6 @@ def run(
     global_ds = postprocess_global(
         ds_nested=ds_nested,
         lam_index=lam_index,
-        vars_of_interest=vars_of_interest,
-        level_variables=level_variables,
         levels=levels,
         lcc_info=lcc_info,
         global_info=global_info,

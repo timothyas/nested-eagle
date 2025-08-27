@@ -11,13 +11,12 @@ import ufs2arco.utils
 
 from .log import setup_simple_log
 from .utils import open_yaml_config
+from .postprocess import regrid_nested_to_global, get_xy, trim_xarray_edge
 
 logger = logging.getLogger("eagle")
 
 
-def get_xy():
-    xds = xr.open_zarr("/pscratch/sd/t/timothys/nested-eagle/v0/data/hrrr.analysis.zarr")
-    return {"x": xds["x"].load(), "y": xds["y"].load()}
+
 
 _extra_coords = get_xy()
 
@@ -78,15 +77,6 @@ def subsample(xds, levels=None, vars_of_interest=None):
     return xds
 
 
-def trim_xarray_edge(xds, trim_edge):
-    assert all(key in xds for key in ("x", "y"))
-    xds["x"].load()
-    xds["y"].load()
-    condx = ( (xds["x"] > trim_edge[0]-1) & (xds["x"] < xds["x"].max().values-trim_edge[1]+1) ).compute()
-    condy = ( (xds["y"] > trim_edge[2]-1) & (xds["y"] < xds["y"].max().values-trim_edge[3]+1) ).compute()
-    xds = xds.where(condx & condy, drop=True)
-    return xds
-
 
 
 def open_anemoi_dataset(path, trim_edge=None, levels=None, vars_of_interest=None):
@@ -108,19 +98,18 @@ def open_anemoi_inference_dataset(path, model_type, lam_index=None, levels=None,
 
     ids = xr.open_dataset(path, chunks="auto")
     xds = ufs2arco.utils.convert_anemoi_inference_dataset(ids)
+    xds = subsample(xds, levels, vars_of_interest)
 
     if "nested" in model_type:
         assert lam_index is not None
         if "lam" in model_type:
             xds = xds.isel(cell=slice(lam_index))
+            xds = xds.load()
 
         else:
-            xds = xds.isel(cell=slice(lam_index,None))
-            raise NotImplementedError("Need to put in the cutout/regridding stuff for nested-global")
+            xds = xds.load()
 
-    xds = subsample(xds, levels, vars_of_interest)
-    xds = xds.load()
-    if trim_edge is not None:
+    if trim_edge is not None and "lam" in model_type:
         for key in ["x", "y"]:
             if key in ids:
                 xds[key] = ids[key] if "variable" not in ids[key].dims else ids[key].isel(variable=0, drop=True)
@@ -270,7 +259,7 @@ def compute_error_metrics():
     )
 
     # Area weights
-    if model_type == "global":
+    if "global" in model_type:
         latlon_weights = get_gridcell_area_weights(vds)
 
     elif model_type == "nested-lam":
@@ -307,6 +296,13 @@ def compute_error_metrics():
                 t0=t0,
                 trim_edge=config.get("trim_forecast_edge", None),
                 **subsample_kwargs,
+            )
+        if model_type == "nested-global":
+            fds = regrid_nested_to_global(
+                fds,
+                ds_out=vds.coords.to_dataset().load(),
+                lam_index=lam_index,
+                regrid_weights_filename=config.get("regrid_weights_path", "conservative_weights.nc"),
             )
 
         tds = vds.sel(time=fds.time.values).load()
