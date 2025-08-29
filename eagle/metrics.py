@@ -1,5 +1,6 @@
 import logging
 import sys
+from math import ceil
 
 import numpy as np
 from scipy.spatial import SphericalVoronoi
@@ -8,15 +9,13 @@ import xarray as xr
 import pandas as pd
 
 import ufs2arco.utils
+from ufs2arco.mpi import MPITopology
 
 from .log import setup_simple_log
 from .utils import open_yaml_config
 from .postprocess import regrid_nested_to_global, get_xy, trim_xarray_edge
 
-logger = logging.getLogger("eagle")
-
-
-
+logger = logging.getLogger("ufs2arco")
 
 _extra_coords = get_xy()
 
@@ -77,8 +76,6 @@ def subsample(xds, levels=None, vars_of_interest=None):
     return xds
 
 
-
-
 def open_anemoi_dataset(path, trim_edge=None, levels=None, vars_of_interest=None):
 
     xds = xr.open_zarr(path)
@@ -92,6 +89,7 @@ def open_anemoi_dataset(path, trim_edge=None, levels=None, vars_of_interest=None
     if trim_edge is not None:
         vds = trim_xarray_edge(vds, trim_edge)
     return vds
+
 
 def open_anemoi_inference_dataset(path, model_type, lam_index=None, levels=None, vars_of_interest=None, trim_edge=None):
     assert model_type in ("nested-lam", "nested-global", "global")
@@ -240,7 +238,8 @@ def compute_error_metrics():
         raise Exception("Did not get an argument. Usage is:\npython compute_error_metrics.py recipe.yaml")
 
     config = open_yaml_config(sys.argv[1])
-    setup_simple_log()
+    #setup_simple_log()
+    topo = MPITopology(log_dir=config.get("log_path", "./metrics-logs"))
 
     # options used for verification and inference datasets
     model_type = config["model_type"]
@@ -277,9 +276,23 @@ def compute_error_metrics():
     mae_container = list()
     spatial_rmse_container = list() if keep_spatial_t0 else None
     spatial_mae_container = list() if keep_spatial_t0 else None
+
+    n_dates = len(dates)
+    n_batches = ceil(n_dates / topo.size)
+
     logger.info(f" --- Starting Metrics Computation --- ")
-    for t0 in dates:
+    for batch_idx in range(n_batches):
+
+        date_idx = (batch_idx * topo.size) + topo.rank
+        if date_idx + 1 > n_dates:
+            break
+        try:
+            t0 = dates[date_idx]
+        except:
+            logger.info(f"trying to get this date: {date_idx} / {n_dates}")
+            raise
         st0 = t0.strftime("%Y-%m-%dT%H")
+        logger.info(f"\tProcessing {st0}, batch {batch_idx} / {n_batches}")
         if config.get("from_anemoi", True):
 
             fds = open_anemoi_inference_dataset(
@@ -310,48 +323,74 @@ def compute_error_metrics():
         rmse_container.append(rmse(target=tds, prediction=fds, weights=latlon_weights))
         mae_container.append(mae(target=tds, prediction=fds, weights=latlon_weights))
 
-        this_spatial_rmse = spatial_rmse(target=tds, prediction=fds, weights=latlon_weights, keep_t0=keep_spatial_t0)
-        this_spatial_mae = spatial_mae(target=tds, prediction=fds, weights=latlon_weights, keep_t0=keep_spatial_t0)
+    #    this_spatial_rmse = spatial_rmse(target=tds, prediction=fds, weights=latlon_weights, keep_t0=keep_spatial_t0)
+    #    this_spatial_mae = spatial_mae(target=tds, prediction=fds, weights=latlon_weights, keep_t0=keep_spatial_t0)
 
-        if spatial_rmse_container is None:
-            spatial_rmse_container = this_spatial_rmse / len(dates)
-            spatial_mae_container = this_spatial_mae / len(dates)
+    #    if spatial_rmse_container is None:
+    #        spatial_rmse_container = this_spatial_rmse / len(dates)
+    #        spatial_mae_container = this_spatial_mae / len(dates)
 
-        else:
-            if keep_spatial_t0:
-                spatial_rmse_container.append(this_spatial_rmse)
-                spatial_mae_container.append(this_spatial_mae)
-            else:
-                spatial_rmse_container += this_spatial_rmse / len(dates)
-                spatial_mae_container += this_spatial_mae / len(dates)
+    #    else:
+    #        if keep_spatial_t0:
+    #            spatial_rmse_container.append(this_spatial_rmse)
+    #            spatial_mae_container.append(this_spatial_mae)
+    #        else:
+    #            spatial_rmse_container += this_spatial_rmse / len(dates)
+    #            spatial_mae_container += this_spatial_mae / len(dates)
 
         logger.info(f"\tDone with {st0}")
     logger.info(f" --- Done Computing Metrics --- \n")
 
-    logger.info(f" --- Combining & Storing Results --- ")
-    rmse_container = xr.concat(rmse_container, dim="t0")
-    mae_container = xr.concat(mae_container, dim="t0")
+    logger.info(f" --- Gathering results on root process ---")
+    rmse_container = topo.gather(rmse_container)
+    mae_container = topo.gather(mae_container)
+    #if keep_spatial_t0:
+    #    spatial_rmse_container = topo.gather(spatial_rmse_container)
+    #    spatial_mae_container = topo.gather(spatial_mae_container)
+    #else:
+    #    root_spatial_rmse = np.zeros_like(spatial_rmse_container
+    #    root_spatial_mae = 0*spatial_mae_container
+    #    topo.sum(spatial_rmse_container, root_spatial_rmse)
+    #    topo.sum(spatial_mae_container, root_spatial_mae)
 
-    rmse_container.to_netcdf(f"{config['output_path']}/rmse.{config['model_type']}.nc")
-    mae_container.to_netcdf(f"{config['output_path']}/mae.{config['model_type']}.nc")
 
-    if keep_spatial_t0:
-        spatial_rmse_container = xr.concat(spatial_rmse_container, dim="t0")
-        fname = f"{config['output_path']}/spatial.rmse.perIC.{config['model_type']}.nc"
-    else:
-        fname = f"{config['output_path']}/spatial.rmse.{config['model_type']}.nc"
 
-    spatial_rmse_container.to_netcdf(fname)
+    if topo.is_root:
+        rmse_container = [xds for sublist in rmse_container for xds in sublist]
+        mae_container = [xds for sublist in mae_container for xds in sublist]
 
-    if keep_spatial_t0:
-        spatial_mae_container = xr.concat(spatial_mae_container, dim="t0")
-        fname = f"{config['output_path']}/spatial.mae.perIC.{config['model_type']}.nc"
-    else:
-        fname = f"{config['output_path']}/spatial.mae.{config['model_type']}.nc"
+        # Sort before passing to xarray, I guess this is faster?
+        rmse_container = sorted(rmse_container, key=lambda xds: xds.coords["t0"])
+        mae_container = sorted(mae_container, key=lambda xds: xds.coords["t0"])
 
-    spatial_mae_container.to_netcdf(fname)
+        logger.info(f" --- Combining & Storing Results --- ")
+        rmse_container = xr.concat(rmse_container, dim="t0")
+        mae_container = xr.concat(mae_container, dim="t0")
 
-    logger.info(f" --- Done Storing Results at {config['output_path']} --- \n")
+        rmse_container.to_netcdf(f"{config['output_path']}/rmse.{config['model_type']}.nc")
+        mae_container.to_netcdf(f"{config['output_path']}/mae.{config['model_type']}.nc")
+
+    #    if keep_spatial_t0:
+    #        spatial_rmse_container = sorted(spatial_rmse_container, key=lambda xds: xds.coords["t0"])
+    #        spatial_rmse_container = xr.concat(spatial_rmse_container, dim="t0")
+    #        fname = f"{config['output_path']}/spatial.rmse.perIC.{config['model_type']}.nc"
+    #    else:
+    #        spatial_rmse_container = root_spatial_rmse
+    #        fname = f"{config['output_path']}/spatial.rmse.{config['model_type']}.nc"
+
+    #    spatial_rmse_container.to_netcdf(fname)
+
+    #    if keep_spatial_t0:
+    #        spatial_mae_container = sorted(spatial_mae_container, key=lambda xds: xds.coords["t0"])
+    #        spatial_mae_container = xr.concat(spatial_mae_container, dim="t0")
+    #        fname = f"{config['output_path']}/spatial.mae.perIC.{config['model_type']}.nc"
+    #    else:
+    #        spatial_mae_container = root_spatial_mae
+    #        fname = f"{config['output_path']}/spatial.mae.{config['model_type']}.nc"
+
+    #    spatial_mae_container.to_netcdf(fname)
+
+        logger.info(f" --- Done Storing Results at {config['output_path']} --- \n")
 
 if __name__ == "__main__":
     compute_error_metrics()
