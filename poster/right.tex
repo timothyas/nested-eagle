@@ -1,0 +1,85 @@
+\vspace{-4.8ex}
+\section{Precipitation Skill Over CONUS}
+\begin{minipage}{\textwidth}
+    \vspace{-.25ex}
+    \centering
+    \includegraphics[width=\textwidth]{figures/total_precipitation_6hr.2023-03-09T00.2023-03-10T00.jpeg}
+\end{minipage}
+
+\vspace{1ex}
+\begin{minipage}{\textwidth}
+    Evaluation against NOAA's Analysis of Record for Calibration (AORC) Dataset:
+    \begin{itemize}
+        \item ~1450 forecasts initialized during validation period
+            \vspace{.5ex}
+        \item compare 6h accumulations from each model at lead times: 6h, 12h,
+            24h, and 48h
+            \vspace{.5ex}
+        \item all datasets conservatively regridded to 15km using
+            \texttt{ufs2arco}
+            \vspace{.5ex}
+    \end{itemize}
+
+    \vspace{.5ex}
+    Here we show:
+    \begin{itemize}
+        \item monthly mean precipitation, relative to AORC
+            \vspace{.5ex}
+        \item Fractional Skill Score (FSS), using a $\sim$33km radius
+            \vspace{.5ex}
+    \end{itemize}
+\end{minipage}
+
+\vspace{1ex}
+\begin{minipage}{\textwidth}
+    \centering
+    \hspace{-3ex}\includegraphics[width=\textwidth]{figures/poster_monthly_mean_precip.pdf}
+\end{minipage}
+
+\begin{minipage}{\textwidth}
+    \centering
+    \hspace{-3ex}\includegraphics[width=.8\textwidth]{figures/poster_fss.pdf}
+\end{minipage}
+
+
+\vfill
+\begin{tcolorbox}[width=\textwidth,
+    colframe=postOI,
+    colback=white,
+    arc=24pt,
+    boxrule=5pt]
+    \begin{minipage}{\textwidth}
+        \vspace{-3ex}
+        \section{Next Steps}
+        \vspace{-2ex}
+        \begin{itemize}
+            \item Scale to 0.25 degree global + 6km CONUS resolution
+                \vspace{.5ex}
+            \item Train with CRPS loss for ensemble uncertainty estimation and
+                better feature representation
+                \vspace{.5ex}
+            \item Incorporate observations into evaluation and training
+                \vspace{.5ex}
+        \end{itemize}
+    \end{minipage}
+\end{tcolorbox}
+
+%#\section{References}
+%#
+%#\vspace{-2ex}
+%#
+%#\begin{minipage}{\textwidth}
+%#    {
+%#        \fontsizeinstitution
+%#        Nipen et al
+%#
+%#%    \citeps{adusumilli_interannual_2020} doi: 10.1038/s41561-020-0616-z
+%#%
+%#%    \citeps{furst_safety_2016} doi: 10.1038/nclimate2912
+%#%
+%#%    \citeps{gudmundsson_instantaneous_2019} doi: 10.1029/2019GL085027
+%#%
+%#%    \citeps{jacobs2011stronger} doi: 10.1038/ngeo1188
+%#
+%#    }
+%#\end{minipage}

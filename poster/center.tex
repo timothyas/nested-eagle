@@ -1,0 +1,63 @@
+\maincolumn{
+
+    \vspace{-0.085\textheight}
+    \section{Prognostic Skill Over CONUS}
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/2m_temperature.2023-03-09T00.2023-03-10T00.jpeg}
+    \end{minipage}
+
+    \vspace{1ex}
+    \begin{minipage}{\textwidth}
+        Evaluation against HRRR Analysis:
+        \begin{itemize}
+            \item 158 forecasts initialized throughout validation period
+                \vspace{.5ex}
+            \item all datasets conservatively regridded to 15km using
+                \texttt{ufs2arco}
+                \vspace{.5ex}
+            \item plots show median Root Mean Squared Error (RMSE), shading
+                indicates 95\% confidence interval
+                \vspace{.5ex}
+        \end{itemize}
+    \end{minipage}
+
+    \vspace{1ex}
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/poster_rmse_48h.pdf}
+    \end{minipage}
+
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/poster_rmse_10d.pdf}
+    \end{minipage}
+
+    \vfill
+    \begin{tcolorbox}[width=\textwidth,
+        colframe=prior,
+        colback=white,
+        arc=24pt,
+        boxrule=5pt]
+        \begin{minipage}{\textwidth}
+            \vspace{-3ex}
+            \section{Main Results}
+            \vspace{-2ex}
+            \begin{itemize}
+                \item Lower RMSE than HRRR vs HRRR Analysis on all prognostic variables analyzed
+                    \vspace{.5ex}
+                \item At 10 days, RMSE is competitive with GFS
+                    \vspace{.5ex}
+                \item At 6h lead, monthly mean precipitation matches HRRR, but
+                    longer lead times have larger bias
+                    \vspace{.5ex}
+                \item Fractional Skill Score highlights blurring in the model,
+                    owing to MSE loss in deterministic model training
+                    \vspace{.5ex}
+            \end{itemize}
+        \end{minipage}
+    \end{tcolorbox}
+
+
+    }{
+}

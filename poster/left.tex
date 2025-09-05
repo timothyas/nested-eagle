@@ -1,0 +1,61 @@
+\title{Nested-EAGLE: \\[.5ex]
+    A Data Driven, Global \\[.5ex]
+    Weather Model with \\[.5ex]
+    High Resolution over \\[.5ex]
+    the Contiguous US
+}
+
+\author{Timothy A. Smith, NOAA PSL}
+\author{Mariah Pope, EPIC}
+\author{Sergey Frolov, NOAA PSL}
+\author{Brett Basarab, CIRES / NOAA PSL}
+\author{Daniel Abdi, CIRES / NOAA GSL}
+\author{Isidora Jankov, NOAA GSL}
+
+\section{Goal}
+
+\vspace{-1ex}
+Develop a global medium range weather prediction model that:
+\vspace{.5ex}
+
+\begin{itemize}
+    \item captures synoptic scale forcings
+    \item represents precipitation at scale useful for decision makers
+    \item produces forecasts at a low computational expense
+\end{itemize}
+
+\section{Data}
+
+\vspace{-1ex}
+\begin{itemize}
+    \item Train on GFS + HRRR ``Analysis'' (fhr=0) for all variables, except
+        precipitation, which uses 0-6h forecast accumulations
+        \vspace{.25ex}
+    \item Implement nested or ``stretched'' grid approach, following Met Norway,
+        where HRRR grid is cut out of GFS grid (no overlap)
+        \vspace{.25ex}
+    \item Use full archives available on NCAR RDA and AWS:
+        \begin{itemize}
+            \item Training: Feb 2015-Jan 2023
+            \item Validation: Feb 2023-Jan 2024
+            \item Testing Feb 2024-Jan 2025
+        \end{itemize}
+        \vspace{.25ex}
+    \item Conservatively regrid archived 0.25$^\circ$ GFS to 1.00$^\circ$ and
+        3km HRRR to 15km
+        \vspace{.25ex}
+\end{itemize}
+
+\section{Design Choices that Mattered}
+
+\vspace{-1ex}
+\begin{itemize}
+    \item Using shifted window processor removed GFS/HRRR boundary artifacts
+        \vspace{.25ex}
+    \item Reduce CONUS loss weight 50\%$\rightarrow$10\% improved skill
+        significantly
+        \vspace{.25ex}
+\end{itemize}
+
+%% This fills the space between the content and the logo
+%\vfill

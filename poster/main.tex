@@ -1,0 +1,100 @@
+%%%% Modified version of the Better poster example
+%%%% by Tim Smith
+
+%%%% Better Poster latex template example v1.0 (2019/04/04)
+%%%% GNU General Public License v3.0
+%%%% Rafael Bailo
+%%%% https://github.com/rafaelbailo/betterposter-latex-template
+%%%%
+%%%% Original design from Mike Morrison
+%%%% https://twitter.com/mikemorrison
+
+\documentclass[4x3paper]{betterposter}
+\usepackage{tcolorbox}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{natbib}
+\usepackage{cleveref}
+\usepackage{enumitem}
+
+% --- Tikz stuff
+%\usetikzlibrary{shapes.geometric, hobby, decorations.pathreplacing, calc}
+%\usetikzlibrary{arrows, arrows.meta}
+
+% bibentry has \nobibliography
+\usepackage{bibentry}
+
+% Remove default references section title
+\renewcommand\refname{}
+
+%%%% Uncomment the following commands to customise the format
+
+%% Setting the width of columns
+% Left column
+\setlength{\leftbarwidth}{0.3\paperwidth}
+% Right column
+\setlength{\rightbarwidth}{0.35\paperwidth}
+
+%% Setting the column margins
+% Vertical margin
+%\setlength{\columnmarginvertical}{0.05\paperheight}
+% Horizontal margin
+%\setlength{\columnmarginhorizontal}{0.05\paperheight}
+% Vertical margin for the main column
+%\setlength{\maincolumnmarginvertical}{0.15\paperheight}
+% Horizontal margin for the main column
+\setlength{\maincolumnmarginhorizontal}{0.02\paperwidth}
+
+%% Changing font sizes
+% a0 paper
+%\renewcommand{\fontsizestandard}{\fontsize{36.00}{44.2} \selectfont}
+%\renewcommand{\fontsizemain}{\fontsize{42.00}{50.50} \selectfont}
+%\renewcommand{\fontsizetitle}{\fontsize{72.00}{108.00} \selectfont}
+%\renewcommand{\fontsizeauthor}{\fontsize{48.00}{68.00} \selectfont}
+%\renewcommand{\fontsizesection}{\fontsize{48.00}{68.00} \selectfont}
+%\newcommand{\fontsizeinstitution}{\fontsize{24.00}{34.00} \selectfont}
+% 4x3 paper
+\renewcommand{\fontsizestandard}{\fontsize{38.02}{46.68} \selectfont}
+\renewcommand{\fontsizemain}{\fontsize{44.36}{53.34} \selectfont}
+\renewcommand{\fontsizetitle}{\fontsize{76.05}{114.07} \selectfont}
+\renewcommand{\fontsizeauthor}{\fontsize{50.70}{71.82} \selectfont}
+\renewcommand{\fontsizesection}{\fontsize{50.70}{71.82} \selectfont}
+\newcommand{\fontsizeinstitution}{\fontsize{25.35}{35.91} \selectfont}
+
+\renewcommand*{\cite}[1]{{\fontsizestandard\realcite{#1}}}
+\renewcommand*{\citet}[1]{{\fontsizestandard\realcitet{#1}}}
+\renewcommand*{\citep}[1]{{\fontsizestandard\realcitep{#1}}}
+\newcommand{\citeps}[1]{{\fontsizeinstitution\realcitep{#1}}}
+
+%% Changing font sizes for a specific text segment
+% Place the text inside brackets:
+% {\fontsize{28}{35} \selectfont Your text goes here}
+
+%% Changing colours
+% Background of side columns
+%\renewcommand{\columnbackgroundcolor}{black}
+% Font of side columns
+%\renewcommand{\columnfontcolor}{gray}
+% Background of main column
+\renewcommand{\maincolumnbackgroundcolor}{white}
+%\renewcommand{\maincolumnbackgroundcolor}{theory}
+%\renewcommand{\maincolumnbackgroundcolor}{methods}
+%\renewcommand{\maincolumnbackgroundcolor}{intervention}
+% Font of main column
+\renewcommand{\maincolumnfontcolor}{black}
+\definecolor{prior}{HTML}{8172B2}
+\definecolor{postOI}{HTML}{CCB974}
+\definecolor{post}{HTML}{64B5CD}
+
+\begin{document}
+\betterposter{
+    \input{center.tex}
+}{
+    \input{left.tex}
+}{
+    \input{right.tex}
+    %\nobibliography{../references/ocean_modelling.bib,../references/ocean_refs.bib,../references/oed_inverse_refs.bib,../references/pig_refs.bib}
+    \bibliographystyle{apalike}
+}
+\end{document}
