@@ -8,9 +8,11 @@
 
 \vspace{1ex}
 \begin{minipage}{\textwidth}
-    Evaluation against NOAA's Analysis of Record for Calibration (AORC) Dataset:
+    Evaluation against NOAA's Analysis of Record for Calibration (AORC) Dataset
+    [3]:
+    \vspace{.5ex}
     \begin{itemize}
-        \item ~1450 forecasts initialized during validation period
+        \item $\sim$1450 forecasts initialized during validation period
             \vspace{.5ex}
         \item compare 6h accumulations from each model at lead times: 6h, 12h,
             24h, and 48h
@@ -22,6 +24,7 @@
 
     \vspace{.5ex}
     Here we show:
+    \vspace{.5ex}
     \begin{itemize}
         \item monthly mean precipitation, relative to AORC
             \vspace{.5ex}
@@ -33,12 +36,12 @@
 \vspace{1ex}
 \begin{minipage}{\textwidth}
     \centering
-    \hspace{-3ex}\includegraphics[width=\textwidth]{figures/poster_monthly_mean_precip.pdf}
+    \includegraphics[width=.7\textwidth]{figures/poster_monthly_mean_precip.pdf}
 \end{minipage}
 
 \begin{minipage}{\textwidth}
     \centering
-    \hspace{-3ex}\includegraphics[width=.8\textwidth]{figures/poster_fss.pdf}
+    \includegraphics[width=.8\textwidth]{figures/poster_fss.pdf}
 \end{minipage}
 
 
@@ -53,7 +56,7 @@
         \section{Next Steps}
         \vspace{-2ex}
         \begin{itemize}
-            \item Scale to 0.25 degree global + 6km CONUS resolution
+            \item Scale to 0.25$^\circ$ global and 6km CONUS resolution
                 \vspace{.5ex}
             \item Train with CRPS loss for ensemble uncertainty estimation and
                 better feature representation

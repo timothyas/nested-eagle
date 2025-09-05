@@ -12,27 +12,32 @@
 \author{Daniel Abdi, CIRES / NOAA GSL}
 \author{Isidora Jankov, NOAA GSL}
 
+\vspace{-2ex}
 \section{Goal}
 
-\vspace{-1ex}
+\vspace{-2.5ex}
 Develop a global medium range weather prediction model that:
 \vspace{.5ex}
-
 \begin{itemize}
-    \item captures synoptic scale forcings
+    \item captures synoptic scale dynamics
     \item represents precipitation at scale useful for decision makers
     \item produces forecasts at a low computational expense
 \end{itemize}
 
+\vspace{-1.5ex}
 \section{Data}
 
-\vspace{-1ex}
+\vspace{-2.5ex}
 \begin{itemize}
-    \item Train on GFS + HRRR ``Analysis'' (fhr=0) for all variables, except
-        precipitation, which uses 0-6h forecast accumulations
+    \item Train on GFS \& HRRR ``Analysis'' (fhr=0) for all\\variables, except
+        precipitation, which uses 0-6h\\forecast accumulations
         \vspace{.25ex}
-    \item Implement nested or ``stretched'' grid approach, following Met Norway,
-        where HRRR grid is cut out of GFS grid (no overlap)
+    \item Implement nested or ``stretched'' grid approach,\\following Met
+        Norway [1]:
+        cut out CONUS portion from GFS, stick in HRRR
+        \vspace{.25ex}
+    \item Conservatively regrid archived GFS: 1/4$^\circ$$\rightarrow$1$^\circ$ and
+        HRRR: 3km$\rightarrow$15km
         \vspace{.25ex}
     \item Use full archives available on NCAR RDA and AWS:
         \begin{itemize}
@@ -41,21 +46,40 @@ Develop a global medium range weather prediction model that:
             \item Testing Feb 2024-Jan 2025
         \end{itemize}
         \vspace{.25ex}
-    \item Conservatively regrid archived 0.25$^\circ$ GFS to 1.00$^\circ$ and
-        3km HRRR to 15km
-        \vspace{.25ex}
+    \item Use \texttt{ufs2arco} [2] for all data processing
 \end{itemize}
 
+\vspace{-1.5ex}
 \section{Design Choices that Mattered}
 
-\vspace{-1ex}
+\vspace{-2.5ex}
 \begin{itemize}
-    \item Using shifted window processor removed GFS/HRRR boundary artifacts
+    \item Moving from ``GraphCast Style'' multimesh to single, high resolution
+        mesh with shifted window processor removed GFS/HRRR boundary artifacts
         \vspace{.25ex}
     \item Reduce CONUS loss weight 50\%$\rightarrow$10\% improved skill
         significantly
         \vspace{.25ex}
 \end{itemize}
+
+\vspace{-1.5ex}
+\section{References}
+
+\vspace{-2.5ex}
+\begin{minipage}{\textwidth}
+    {
+        \fontsizeinstitution
+        %\citeps{nipen_regional_2024} doi: 10.48550/arXiv.2409.02891
+        [1] Nipen et al., (2024). doi: 10.48550/arXiv.2409.02891
+
+        %\citeps{ufs2arco} \url{ufs2arco.readthedocs.io}
+        [2] \texttt{ufs2arco} Documentation. \url{ufs2arco.readthedocs.io}
+
+        %\citeps{aorc} \url{registry.opendata.aws/noaa-nws-aorc}
+        [3] AORC Dataset. \url{registry.opendata.aws/noaa-nws-aorc}
+
+    }
+\end{minipage}
 
 %% This fills the space between the content and the logo
 %\vfill

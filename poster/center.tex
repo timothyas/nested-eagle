@@ -9,12 +9,12 @@
 
     \vspace{1ex}
     \begin{minipage}{\textwidth}
-        Evaluation against HRRR Analysis:
+        Evaluation against HRRR Forecast Hour 0 (fhr=0):
+        \vspace{.5ex}
         \begin{itemize}
             \item 158 forecasts initialized throughout validation period
                 \vspace{.5ex}
-            \item all datasets conservatively regridded to 15km using
-                \texttt{ufs2arco}
+            \item all datasets conservatively regridded to 15km
                 \vspace{.5ex}
             \item plots show median Root Mean Squared Error (RMSE), shading
                 indicates 95\% confidence interval
@@ -34,6 +34,7 @@
     \end{minipage}
 
     \vfill
+    \vspace{2.75ex}
     \begin{tcolorbox}[width=\textwidth,
         colframe=prior,
         colback=white,
@@ -44,7 +45,7 @@
             \section{Main Results}
             \vspace{-2ex}
             \begin{itemize}
-                \item Lower RMSE than HRRR vs HRRR Analysis on all prognostic variables analyzed
+                \item Lower RMSE than HRRR vs HRRR fhr=0 for all \\prognostic variables analyzed
                     \vspace{.5ex}
                 \item At 10 days, RMSE is competitive with GFS
                     \vspace{.5ex}
@@ -57,7 +58,5 @@
             \end{itemize}
         \end{minipage}
     \end{tcolorbox}
-
-
     }{
 }

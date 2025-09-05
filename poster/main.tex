@@ -62,6 +62,9 @@
 \renewcommand{\fontsizesection}{\fontsize{50.70}{71.82} \selectfont}
 \newcommand{\fontsizeinstitution}{\fontsize{25.35}{35.91} \selectfont}
 
+\let\realcite\cite
+\let\realcitet\citet
+\let\realcitep\citep
 \renewcommand*{\cite}[1]{{\fontsizestandard\realcite{#1}}}
 \renewcommand*{\citet}[1]{{\fontsizestandard\realcitet{#1}}}
 \renewcommand*{\citep}[1]{{\fontsizestandard\realcitep{#1}}}
@@ -83,8 +86,10 @@
 %\renewcommand{\maincolumnbackgroundcolor}{intervention}
 % Font of main column
 \renewcommand{\maincolumnfontcolor}{black}
-\definecolor{prior}{HTML}{8172B2}
-\definecolor{postOI}{HTML}{CCB974}
+%\definecolor{prior}{HTML}{8172B2}
+%\definecolor{postOI}{HTML}{CCB974}
+\definecolor{prior}{HTML}{55A868}
+\definecolor{postOI}{HTML}{d95f02}
 \definecolor{post}{HTML}{64B5CD}
 
 \begin{document}
@@ -94,7 +99,7 @@
     \input{left.tex}
 }{
     \input{right.tex}
-    %\nobibliography{../references/ocean_modelling.bib,../references/ocean_refs.bib,../references/oed_inverse_refs.bib,../references/pig_refs.bib}
-    \bibliographystyle{apalike}
 }
+\nobibliography{references.bib}
+\bibliographystyle{plain}
 \end{document}
