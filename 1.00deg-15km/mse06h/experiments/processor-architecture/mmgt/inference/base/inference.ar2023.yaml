@@ -1,0 +1,17 @@
+checkpoint_path: ${SCRATCH}/nested-eagle/v0/10percent/mmgt/base/checkpoint/124b960f-923a-4af6-85d9-2cf0dfa763ce/inference-last.ckpt
+lead_time: 240
+input_dataset_kwargs:
+  cutout:
+    - join:
+      - dataset: /pscratch/sd/t/timothys/nested-eagle/1.00deg-15km/data/hrrr.analysis.zarr
+      - dataset: /pscratch/sd/t/timothys/nested-eagle/1.00deg-15km/data/hrrr.forecast.zarr
+    - join:
+      - dataset: /pscratch/sd/t/timothys/nested-eagle/1.00deg-15km/data/gfs.analysis.zarr
+      - dataset: /pscratch/sd/t/timothys/nested-eagle/1.00deg-15km/data/gfs.forecast.zarr
+  adjust: all
+  min_distance_km: 0
+output_path: ${SCRATCH}/nested-eagle/v0/10percent/mmgt/base/inference
+
+start_date: 2023-03-08T00
+end_date: 2023-03-09T12
+freq: 12h

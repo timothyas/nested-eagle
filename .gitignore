@@ -1,9 +1,16 @@
 # Custom additions
 
 **/slurm/
+**/outputs/
 **/training/outputs/
 *.nc
 *.zarr
+*.DS_Store
+*.npz
+*.tar.gz
+*Untitled*.ipynb
+*.pdf
+*.jpeg
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

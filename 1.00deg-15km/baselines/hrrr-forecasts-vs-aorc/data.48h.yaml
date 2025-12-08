@@ -1,0 +1,122 @@
+mover:
+  name: mpidatamover
+
+directories:
+  zarr: ${SCRATCH}/nested-eagle/1.00deg-15km/baselines/hrrr-forecasts-vs-aorc/hrrr.forecasts.48h.zarr
+  cache: ${SCRATCH}/nested-eagle/1.00deg-15km/baselines/hrrr-forecasts-vs-aorc/cache/48h
+  logs: ${SCRATCH}/nested-eagle/1.00deg-15km/baselines/hrrr-forecasts-vs-aorc/logs/48h
+
+multisource:
+  # 43h
+  - source:
+      name: aws_hrrr_archive
+      t0:
+        start: 2023-02-01T00
+        end: 2024-01-31T12
+        freq: 6h
+      fhr:
+        start: 43
+        end: 44
+        step: 6
+      variables:
+        - accum_tp
+      accum_hrs:
+        accum_tp: 1
+  # 44h
+  - source:
+      name: aws_hrrr_archive
+      t0:
+        start: 2023-02-01T00
+        end: 2024-01-31T12
+        freq: 6h
+      fhr:
+        start: 44
+        end: 45
+        step: 6
+      variables:
+        - accum_tp
+      accum_hrs:
+        accum_tp: 1
+  # 45h
+  - source:
+      name: aws_hrrr_archive
+      t0:
+        start: 2023-02-01T00
+        end: 2024-01-31T12
+        freq: 6h
+      fhr:
+        start: 45
+        end: 46
+        step: 6
+      variables:
+        - accum_tp
+      accum_hrs:
+        accum_tp: 1
+  # 46h
+  - source:
+      name: aws_hrrr_archive
+      t0:
+        start: 2023-02-01T00
+        end: 2024-01-31T12
+        freq: 6h
+      fhr:
+        start: 46
+        end: 47
+        step: 6
+      variables:
+        - accum_tp
+      accum_hrs:
+        accum_tp: 1
+  # 47h
+  - source:
+      name: aws_hrrr_archive
+      t0:
+        start: 2023-02-01T00
+        end: 2024-01-31T12
+        freq: 6h
+      fhr:
+        start: 47
+        end: 48
+        step: 6
+      variables:
+        - accum_tp
+      accum_hrs:
+        accum_tp: 1
+  # 48h
+  - source:
+      name: aws_hrrr_archive
+      t0:
+        start: 2023-02-01T00
+        end: 2024-01-31T12
+        freq: 6h
+      fhr:
+        start: 48
+        end: 49
+        step: 6
+      variables:
+        - accum_tp
+      accum_hrs:
+        accum_tp: 1
+
+transforms:
+  horizontal_regrid:
+    target_grid_path: ${SCRATCH}/nested-eagle/1.00deg-15km/data/hrrr_15km.nc
+    regridder_kwargs:
+      method: conservative
+      reuse_weights: True
+      filename: ${SCRATCH}/nested-eagle/1.00deg-15km/data/conservative_1059x1799_211x359.nc
+
+merged_transforms:
+  xarray_coarsen:
+    reduction: sum
+    dim:
+      fhr: 6
+    coord_func: max
+
+target:
+  name: base
+  chunks:
+    t0: 1
+    fhr: 1
+    y: -1
+    x: -1
