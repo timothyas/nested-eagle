@@ -13,7 +13,7 @@ nodes:
   hidden:
     node_builder:
       _target_: anemoi.graphs.nodes.NPZFileNodes
-      npz_file: ${system.input.latent_mesh}
+      npz_file: ${hardware.paths.graph}/${hardware.files.npz_file}
       lat_key: lat
       lon_key: lon
 
