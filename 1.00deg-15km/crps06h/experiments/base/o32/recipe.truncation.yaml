@@ -29,7 +29,7 @@ edges:
   target_name: data
   edge_builders:
   - _target_: anemoi.graphs.edges.KNNEdges
-    num_nearest_neighbours: 3
+    num_nearest_neighbours: 36
   attributes:
     gauss_weight:
       _target_: anemoi.graphs.edges.attributes.GaussianDistanceWeights

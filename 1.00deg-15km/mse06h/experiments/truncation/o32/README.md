@@ -11,6 +11,6 @@ anemoi-graphs inspect graph.pt figures
 Then to create the weights
 
 ```
-anemoi-graphs export_to_sparse  --edges-attributes-name gauss_weight export_to_sparse recipe.truncation.yaml truncation-matrics
+anemoi-graphs export_to_sparse recipe.truncation.yaml truncation-matrices/ --edge-attribute-name gauss_weight
 ```
 
