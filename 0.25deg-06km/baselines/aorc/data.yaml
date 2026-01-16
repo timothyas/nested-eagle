@@ -1,0 +1,94 @@
+mover:
+  name: mpidatamover
+
+directories:
+  zarr: ${SCRATCH}/nested-eagle/0.25deg-06km/baselines/aorc/aorc.zarr
+  cache: ${SCRATCH}/nested-eagle/0.25deg-06km/baselines/aorc/cache
+  logs: ${SCRATCH}/nested-eagle/0.25deg-06km/baselines/aorc/logs
+
+multisource:
+  # 1h
+  - source:
+      name: aws_aorc
+      time:
+        start: 2023-02-01T01
+        end: 2024-01-31T13
+        freq: 6h
+
+      variables:
+        - APCP_surface
+  # 2h
+  - source:
+      name: aws_aorc
+      time:
+        start: 2023-02-01T02
+        end: 2024-01-31T14
+        freq: 6h
+
+      variables:
+        - APCP_surface
+  # 3h
+  - source:
+      name: aws_aorc
+      time:
+        start: 2023-02-01T03
+        end: 2024-01-31T15
+        freq: 6h
+
+      variables:
+        - APCP_surface
+  # 4h
+  - source:
+      name: aws_aorc
+      time:
+        start: 2023-02-01T04
+        end: 2024-01-31T16
+        freq: 6h
+
+      variables:
+        - APCP_surface
+  # 5h
+  - source:
+      name: aws_aorc
+      time:
+        start: 2023-02-01T05
+        end: 2024-01-31T17
+        freq: 6h
+
+      variables:
+        - APCP_surface
+  # 6h
+  - source:
+      name: aws_aorc
+      time:
+        start: 2023-02-01T06
+        end: 2024-01-31T18
+        freq: 6h
+
+      variables:
+        - APCP_surface
+
+transforms:
+  horizontal_regrid:
+    target_grid_path: ${SCRATCH}/nested-eagle/0.25deg-06km/data/hrrr_06km.nc
+    regridder_kwargs:
+      method: conservative
+      reuse_weights: True
+      filename: ${SCRATCH}/nested-eagle/0.25deg-06km/baselines/aorc/conservative_weights.nc
+      unmapped_to_nan: True
+
+merged_transforms:
+  xarray_coarsen:
+    reduction: sum
+    dim:
+      time: 6
+    coord_func: max
+
+target:
+  name: base
+  rename:
+    APCP_surface: accum_tp
+  chunks:
+    time: 1
+    y: -1
+    x: -1

@@ -1,0 +1,38 @@
+mover:
+  name: mpidatamover
+
+directories:
+  zarr: ${SCRATCH}/nested-eagle/0.25deg-06km/baselines/hrrr-forecasts-vs-aorc/hrrr.forecasts.06h.zarr
+  cache: ${SCRATCH}/nested-eagle/0.25deg-06km/baselines/hrrr-forecasts-vs-aorc/cache/06h
+  logs: ${SCRATCH}/nested-eagle/0.25deg-06km/baselines/hrrr-forecasts-vs-aorc/logs/06h
+
+source:
+  name: aws_hrrr_archive
+  t0:
+    start: 2023-02-01T00
+    end: 2024-01-31T12
+    freq: 6h
+
+  fhr:
+    start: 6
+    end: 7
+    step: 6
+
+  variables:
+    - accum_tp
+
+transforms:
+  horizontal_regrid:
+    target_grid_path: ${SCRATCH}/nested-eagle/0.25deg-06km/data/hrrr_06km.nc
+    regridder_kwargs:
+      method: conservative
+      reuse_weights: True
+      filename: ${SCRATCH}/nested-eagle/0.25deg-06km/data/conservative_weights.nc
+
+target:
+  name: base
+  chunks:
+    t0: 1
+    fhr: 1
+    y: -1
+    x: -1
