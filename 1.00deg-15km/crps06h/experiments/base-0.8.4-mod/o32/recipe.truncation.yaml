@@ -1,0 +1,36 @@
+nodes:
+  data:
+    node_builder:
+      _target_: anemoi.graphs.nodes.AnemoiDatasetNodes
+      dataset:
+        cutout:
+          - dataset: /pscratch/sd/t/timothys/nested-eagle/1.00deg-15km/data/hrrr.zarr
+            trim_edge: [10, 11, 10, 11]
+          - dataset: /pscratch/sd/t/timothys/nested-eagle/1.00deg-15km/data/gfs.zarr
+        adjust: all
+        min_distance_km: 0
+  down:
+    node_builder:
+      _target_: anemoi.graphs.nodes.ReducedGaussianGridNodes
+      grid: o32
+
+edges:
+- source_name: data
+  target_name: down
+  edge_builders:
+  - _target_: anemoi.graphs.edges.CutOffEdges
+    cutoff_factor: .7
+    max_num_neighbours: 1024
+  attributes:
+    gauss_weight:
+      _target_: anemoi.graphs.edges.attributes.GaussianDistanceWeights
+      norm: l2
+- source_name: down
+  target_name: data
+  edge_builders:
+  - _target_: anemoi.graphs.edges.KNNEdges
+    num_nearest_neighbours: 36
+  attributes:
+    gauss_weight:
+      _target_: anemoi.graphs.edges.attributes.GaussianDistanceWeights
+      norm: l2

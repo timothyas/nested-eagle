@@ -1,0 +1,14 @@
+checkpoint_path: ${SCRATCH}/nested-eagle/0.25deg-06km/mse24h/experiments/data-years/all/checkpoint/5f35e4b5cf674d029efd84b5f46aab80/inference-last.ckpt
+output_path: ${SCRATCH}/nested-eagle/0.25deg-06km/mse24h/experiments/data-years/all/inference-validation
+lead_time: 240
+input_dataset_kwargs:
+  cutout:
+    - dataset: /pscratch/sd/t/timothys/nested-eagle/0.25deg-06km/data/hrrr.zarr
+      trim_edge: [25, 24, 25, 26]
+    - dataset: /pscratch/sd/t/timothys/nested-eagle/0.25deg-06km/data/gfs.zarr
+  adjust: all
+  min_distance_km: 6
+
+start_date: 2023-02-01T06
+end_date: 2024-01-20T12
+freq: 54h
