@@ -38,18 +38,7 @@ processor:
   softcap: 0.0 # Transformer only
   use_alibi_slopes: False # Transformer only
   cpu_offload: ${model.cpu_offload}
-  layer_kernels:
-    LayerNorm:
-      _target_: anemoi.models.layers.normalization.ConditionalLayerNorm
-      normalized_shape: ${model.num_channels}
-      condition_shape: ${model.noise_injector.noise_channels_dim}
-      zero_init: True
-      autocast: false
-      #Any arguments to your chosen function go here
-    Linear:
-      _target_: torch.nn.Linear # These reflect the defaults, but are shown here for clarity
-    Activation:
-      _target_: torch.nn.GELU
+  layer_kernels: ${model.layer_kernels}
 
 encoder:
   _target_: anemoi.models.layers.mapper.GraphTransformerForwardMapper
