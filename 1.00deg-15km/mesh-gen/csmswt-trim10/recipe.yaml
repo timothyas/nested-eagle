@@ -8,7 +8,7 @@ nodes:
             trim_edge: [10, 11, 10, 11]
           - dataset: /pscratch/sd/t/timothys/nested-eagle/1.00deg-15km/data/gfs.zarr
         adjust: all
-        min_distance_km: 0
+        min_distance_km: 15
     attributes:
       cutout_mask:
         _target_: anemoi.graphs.nodes.attributes.CutOutMask
