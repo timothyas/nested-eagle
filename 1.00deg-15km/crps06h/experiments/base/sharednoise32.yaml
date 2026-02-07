@@ -85,7 +85,7 @@ dataloader:
       # Global forcing
       - dataset: ${system.input.global_dataset}
     adjust: all
-    min_distance_km: 0
+    min_distance_km: 15
   training:
     datasets:
       data:
@@ -204,6 +204,7 @@ system:
     root: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/1.00deg-15km/crps06h/experiments/base/sharednoise32/
 
 model:
+  compile: []
   num_channels: 512
   noise_conditioned_modules:
     - encoder
