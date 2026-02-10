@@ -226,6 +226,16 @@ model:
       condition_shape: 128
       zero_init: True
       autocast: false
+    Linear:
+      _target_: torch.nn.Linear
+    Activation:
+      _target_: torch.nn.GELU
+    QueryNorm:
+      _target_: anemoi.models.layers.normalization.AutocastLayerNorm
+      bias: false
+    KeyNorm:
+      _target_: anemoi.models.layers.normalization.AutocastLayerNorm
+      bias: false
   processor:
     window_size: 4320
   residual:

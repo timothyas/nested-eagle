@@ -64,7 +64,7 @@ data:
               - lsm
 
 dataloader:
-  prefetch_factor: 1
+  prefetch_factor: 2
   batch_size:
     training: 1
     validation: 1
@@ -85,7 +85,7 @@ dataloader:
       # Global forcing
       - dataset: ${system.input.global_dataset}
     adjust: all
-    min_distance_km: 0
+    min_distance_km: 15
   training:
     datasets:
       data:
@@ -114,7 +114,7 @@ diagnostics:
       tracking_uri: null
       experiment_name: '1.00deg-15km crps06h base'
       project_name: 'Nested-EAGLE'
-      system: False
+      system: True
       terminal: True
       run_name: null # If set to null, the run name will be the a random UUID
       on_resume_create_child: True
@@ -188,10 +188,6 @@ graph:
         _target_: anemoi.graphs.edges.attributes.EdgeDirection
         norm: unit-std
 
-  post_processors:
-    - _target_: anemoi.graphs.processors.SortEdgeIndexByTargetNodes
-      descending: True  # optional, defaults to true
-
 system:
   hardware:
     num_gpus_per_model: 1
@@ -205,43 +201,53 @@ system:
     truncation_inv: null
 
   output:
-    root: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/1.00deg-15km/crps06h/experiments/base/debug-grid-scale/
+    root: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/1.00deg-15km/crps06h/experiments/base/mlpqk32/
 
 model:
+  compile: []
   num_channels: 512
+  noise_conditioned_modules:
+    - encoder
+    - processor
+    - decoder
+  noise_injector:
+    _target_: anemoi.models.layers.ensemble.MLPNoiseConditioning
+    noise_std: 1
+    noise_channels_dim: 32
+    noise_mlp_hidden_dim: 128
+    layer_kernels:
+      Linear:
+        _target_: torch.nn.Linear
+      Activation:
+        _target_: torch.nn.GELU
   layer_kernels:
     LayerNorm:
-      _target_: torch.nn.LayerNorm
+      _target_: anemoi.models.layers.normalization.ConditionalLayerNorm
+      condition_shape: 128
+      zero_init: True
+      autocast: false
     Linear:
       _target_: torch.nn.Linear
     Activation:
       _target_: torch.nn.GELU
     QueryNorm:
-      _target_: anemoi.models.layers.normalization.AutocastLayerNorm
-      bias: false
+      _target_: anemoi.models.layers.normalization.ConditionalLayerNorm
+      condition_shape: 128
+      zero_init: true
+      autocast: true
+      learn_bias: false
     KeyNorm:
-      _target_: anemoi.models.layers.normalization.AutocastLayerNorm
-      bias: false
-  noise_injector:
-    _target_: anemoi.models.layers.ensemble.NoiseConditioning
-    noise_std: 1
-    noise_channels_dim: 4
-    noise_mlp_hidden_dim: 24
-    noise_matrix: null
-    row_normalize_noise_matrix: False
-    autocast: False
-    layer_kernels:
-      Activation:
-        _target_: torch.nn.GELU
+      _target_: anemoi.models.layers.normalization.ConditionalLayerNorm
+      condition_shape: 128
+      zero_init: true
+      autocast: true
+      learn_bias: false
   processor:
     window_size: 4320
-    layer_kernels:
-      LayerNorm:
-        _target_: anemoi.models.layers.normalization.ConditionalLayerNorm
-        normalized_shape: ${model.num_channels}
-        condition_shape: ${model.noise_injector.noise_channels_dim}
-        zero_init: True
-        autocast: False
+  encoder:
+    qk_norm: true
+  decoder:
+    qk_norm: true
   residual:
     _target_: anemoi.models.layers.residual.SkipConnection
     step: -1

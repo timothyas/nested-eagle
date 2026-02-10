@@ -214,18 +214,22 @@ model:
     _target_: anemoi.models.layers.ensemble.SimpleNoiseConditioning
     noise_std: 1
     noise_channels_dim: 32
-    noise_mlp_hidden_dim: 128
-    layer_kernels:
-      Linear:
-        _target_: torch.nn.Linear
-      Activation:
-        _target_: torch.nn.GELU
   layer_kernels:
     LayerNorm:
       _target_: anemoi.models.layers.normalization.ConditionalLayerNorm
       condition_shape: 32
       zero_init: True
       autocast: false
+    Linear:
+      _target_: torch.nn.Linear
+    Activation:
+      _target_: torch.nn.GELU
+    QueryNorm:
+      _target_: anemoi.models.layers.normalization.AutocastLayerNorm
+      bias: false
+    KeyNorm:
+      _target_: anemoi.models.layers.normalization.AutocastLayerNorm
+      bias: false
   processor:
     window_size: 4320
   residual:

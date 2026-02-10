@@ -20,10 +20,8 @@ layer_kernels:
     _target_: torch.nn.GELU
   QueryNorm:
     _target_: anemoi.models.layers.normalization.AutocastLayerNorm
-    bias: False
   KeyNorm:
     _target_: anemoi.models.layers.normalization.AutocastLayerNorm
-    bias: False
 
 processor:
   _target_: anemoi.models.layers.processor.TransformerProcessor

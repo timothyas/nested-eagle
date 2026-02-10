@@ -204,11 +204,24 @@ system:
     root: ${oc.decode:${oc.env:SCRATCH}}/nested-eagle/1.00deg-15km/crps06h/experiments/base/debug/
 
 model:
+  num_channels: 512
+  layer_kernels:
+    LayerNorm:
+      _target_: torch.nn.LayerNorm
+    Linear:
+      _target_: torch.nn.Linear
+    Activation:
+      _target_: torch.nn.GELU
+    QueryNorm:
+      _target_: anemoi.models.layers.normalization.AutocastLayerNorm
+      bias: false
+    KeyNorm:
+      _target_: anemoi.models.layers.normalization.AutocastLayerNorm
+      bias: false
   noise_injector:
     _target_: anemoi.models.layers.ensemble.SimpleNoiseConditioning
     noise_std: 1
     noise_channels_dim: 4
-  num_channels: 512
   processor:
     window_size: 4320
     layer_kernels:
