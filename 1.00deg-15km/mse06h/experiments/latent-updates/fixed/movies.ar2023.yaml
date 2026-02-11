@@ -1,5 +1,5 @@
-forecast_path: ${SCRATCH}/nested-eagle/1.00deg-15km/crps06h/experiments/base/mlpnoise32/inference-validation
-output_path: ${SCRATCH}/nested-eagle/1.00deg-15km/crps06h/experiments/base/mlpnoise32/inference-validation/movies
+forecast_path: ${SCRATCH}/nested-eagle/1.00deg-15km/mse06h/experiments/latent-updates/fixed/inference-validation
+output_path: ${SCRATCH}/nested-eagle/1.00deg-15km/mse06h/experiments/latent-updates/fixed/inference-validation/movies
 lead_time: 240
 start_date: 2023-03-09T06
 end_date: 2023-03-19T06
