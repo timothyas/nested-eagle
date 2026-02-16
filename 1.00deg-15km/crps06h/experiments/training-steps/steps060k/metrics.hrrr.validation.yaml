@@ -1,5 +1,5 @@
-forecast_path: ${SCRATCH}/nested-eagle/1.00deg-15km/crps06h/experiments/training-steps/hailmary-steps060k/inference-validation
-output_path:   ${SCRATCH}/nested-eagle/1.00deg-15km/crps06h/experiments/training-steps/hailmary-steps060k/inference-validation
+forecast_path: ${SCRATCH}/nested-eagle/1.00deg-15km/crps06h/experiments/training-steps/steps060k/inference-validation
+output_path:   ${SCRATCH}/nested-eagle/1.00deg-15km/crps06h/experiments/training-steps/steps060k/inference-validation
 lead_time: 240
 use_mpi: True
 
