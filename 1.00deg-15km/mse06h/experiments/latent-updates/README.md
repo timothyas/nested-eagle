@@ -17,6 +17,14 @@ Additionally:
 * o48.yaml: uses a global healpix mesh at ~2 degree resolution, along with the
   same coarsened, 30km HRRR mesh (LCC projection) for the nest latent mesh
 
+## Results
+
+Cycling through error in different subregions, I can really only make two
+statements:
+1. There are a good fraction of cases where fixing the latent space ordering has
+   improved skill, although it doesn't always matter
+2. There is no discernable difference between the different latent spaces
+
 ## Infinite time
 
 This one would take more time to handle in the postprocessing stage, since all
