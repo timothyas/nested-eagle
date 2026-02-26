@@ -1,5 +1,5 @@
-forecast_path: ${SCRATCH}/nested-eagle/1.00deg-15km/mse06h/experiments/latent-updates/heal5-win3564/inference-validation
-output_path: ${SCRATCH}/nested-eagle/1.00deg-15km/mse06h/experiments/latent-updates/heal5-win3564/inference-validation
+forecast_path: ${SCRATCH}/nested-eagle/1.00deg-15km/mse06h/experiments/fixed-window-size/win3564/inference-validation
+output_path: ${SCRATCH}/nested-eagle/1.00deg-15km/mse06h/experiments/fixed-window-size/win3564/inference-validation
 lead_time: 240
 use_mpi: True
 
