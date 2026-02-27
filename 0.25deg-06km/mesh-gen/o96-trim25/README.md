@@ -6,8 +6,8 @@ Some sizes:
 * If we consider all points in both subdomains from ~53 degrees north to ~22
   degrees north, there are 32,946 (~50%)
 
-## TODO
-
-* [x] Max cutoff for global is 74, that's good to go.
-* [x] Now just need to trim down the max num. neareast neighboUrs
-* [ ] Confirm max cutoff = 24km is good in the LAM region
+Compared to the initial Lat Lon mesh, this is really superior:
+* The original one had ~42k isolated nodes, this has none
+* This has about 1.66M fewer data -> hidden edges (~40% fewer)
+* This has about 24k fewer mesh nodes (~27% fewer)
+* It's about 30 MiB smaller, hopefully that's meaningful

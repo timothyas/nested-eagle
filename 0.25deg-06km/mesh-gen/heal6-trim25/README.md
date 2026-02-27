@@ -6,10 +6,10 @@ Some sizes:
 * If we consider all points in both subdomains from ~53 degrees north to ~22
   degrees north, there are 35,277 (~48%)
 
-## TODO
-
-* [x] Max cutoff for global is 76, that's good to go.
-* [ ] Now just need to trim down the max num. neareast neighboUrs ... after this is
-      done for the o96 mesh
-* [ ] Confirm max cutoff = 24km is good in the LAM region
-
+This seems fine to use, but for reducing the number of grid cells, the
+octahedral grid is the way to go.
+Plus, this needs >1000 data points connected to the mesh points toward the
+poles.
+It's probably not a huge issue, but it's more than double what's needed for the
+octahedral grid.
+Seems not ideal to have such a high level of aggregation if it's avoidable.
