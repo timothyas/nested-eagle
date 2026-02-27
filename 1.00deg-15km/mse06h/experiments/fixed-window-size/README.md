@@ -5,7 +5,7 @@ latent space node ordering has been fixed, so the SWIN transformer is actually
 grabbing neighboring points along a zonal band, not meridionally.
 
 The experiments here follow the same setup as `../fixed-window-size/heal5.yaml`
-with window sizes: (1080, 2160, 3564=N_latent / 8, 4320)
+with window sizes: (1080, 2160, 3564=`N_latent / 8`, 4320)
 
 ## Some notes on mesh size
 
