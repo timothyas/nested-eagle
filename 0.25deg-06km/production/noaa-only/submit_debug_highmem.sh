@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#SBATCH -J debug.singlerollout.stage1b.highmem
-#SBATCH -o slurm/debug.singlerollout.stage1b.highmem.%j.out
-#SBATCH -e slurm/debug.singlerollout.stage1b.highmem.%j.err
-#SBATCH --nodes=8
+#SBATCH -J debug.stage1b.highmem.4node
+#SBATCH -o slurm/debug.stage1b.highmem.4node.%j.out
+#SBATCH -e slurm/debug.stage1b.highmem.4node.%j.err
+#SBATCH --nodes=4
 #SBATCH --tasks-per-node=4
 #SBATCH --gpus-per-node=4
 #SBATCH --qos=regular
@@ -14,6 +14,7 @@
 module load nccl/2.21.5
 conda activate eagle
 
+export LD_PRELOAD=$CONDA_PREFIX/lib/libjemalloc.so
 export NCCL_DEBUG=WARN
 export PYTHONFAULTHANDLER=1
 
@@ -37,7 +38,7 @@ srun --overlap --ntasks-per-node=1 bash -c '
 GPU_PID=$!
 
 # Main training command
-srun ~/anemoi-house/slurm2ddp.sh anemoi-training train --config-name=debugsinglerollout
+srun ~/anemoi-house/slurm2ddp.sh anemoi-training train --config-name=debug
 
 # Cleanup monitors
 kill $SHM_PID $GPU_PID 2>/dev/null
