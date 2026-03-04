@@ -37,8 +37,17 @@ srun --overlap --ntasks-per-node=1 bash -c '
 ' > slurm/gpu_memory_${SLURM_JOBID}.log 2>&1 &
 GPU_PID=$!
 
+# Monitor CPU memory on all nodes
+srun --overlap --ntasks-per-node=1 bash -c '
+  while true; do
+    echo "$(hostname) $(date) $(free -h | awk "/^Mem:/{print \"used:\" \$3 \"/\" \$2}")"
+    sleep 5
+  done
+' > slurm/cpu_memory_${SLURM_JOBID}.log 2>&1 &
+CPU_PID=$!
+
 # Main training command
 srun ~/anemoi-house/slurm2ddp.sh anemoi-training train --config-name=debug
 
 # Cleanup monitors
-kill $SHM_PID $GPU_PID 2>/dev/null
+kill $SHM_PID $GPU_PID $CPU_PID 2>/dev/null
