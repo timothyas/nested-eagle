@@ -1,0 +1,174 @@
+\documentclass[11pt]{article}
+\usepackage{preprint}
+
+% ----------------------------------------------------------------
+%  Optional: override accent colour before \begin{document}
+  \definecolor{accent}{HTML}{004074}   % AGU navy
+% ----------------------------------------------------------------
+
+% Short title shown in running headers
+\shorttitle{Nested-EAGLE}
+
+% Math & notation packages (add your own)
+% Note: amssymb is already loaded by preprint.sty
+\usepackage{amsmath, bm}
+\usepackage{mathtools}   % for \coloneqq, etc.
+
+% Cross-references (optional but recommended)
+\usepackage[capitalise, noabbrev]{cleveref}
+
+% Graphics
+\usepackage{graphicx}
+
+% References
+\usepackage[authoryear, round]{natbib}
+\bibliographystyle{abbrvnat}
+
+% ================================================================
+%  Title block metadata
+% ================================================================
+\title{Nested-EAGLE: A Data Driven Global Weather Model with High
+Resolution over the Contiguous\\United States}
+
+\authors{%
+    Timothy A. Smith\textsuperscript{1,2,*},
+    Mariah Pope\textsuperscript{3},
+    Sergey Frolov\textsuperscript{1},
+    Brett Basarab\textsuperscript{1, 3},
+    Daniel Abdi\textsuperscript{3, 4},
+    Isidora Jankov\textsuperscript{4},
+    Bo Huang\textsuperscript{1, 3}
+}
+
+\affiliations{%
+    \textsuperscript{1}Physical Sciences Laboratory (PSL), National Oceanic and
+        Atmospheric Administration (NOAA), Boulder, CO, USA\\
+    \textsuperscript{2}Nansen Environmental and Remote Sensing Centre,
+        Bergen, Norway\\
+    \textsuperscript{3}Cooperative Institute for Research in Environmental Sciences
+        (CIRES) at the University of Colorado Boulder, Boulder, CO, USA\\
+    \textsuperscript{4}Global Systems Laboratory (GSL), National Oceanic and
+        Atmospheric Administration (NOAA), Boulder, CO, USA
+}
+\email{timothy.smith@nersc.no}
+
+% ================================================================
+\begin{document}
+% ================================================================
+
+\maketitle
+
+% ----------------------------------------------------------------
+\begin{abstract}
+    NOAA’s suite of Numerical Weather Prediction systems spans a wide range of
+    spatiotemporal scales. Each forecast system within the suite is uniquely
+    tailored to its application, with tuned physical parameterizations and model
+    resolutions relevant to the situation. While some separation between
+    different modeling systems is practical, computational resource constraints
+    generally prohibit forecast systems from using high resolution to forecast
+    for long lead times.
+    Here, we present a forecast model that takes an ``all in one'' approach,
+    leveraging advancements in Machine Learning Weather Prediction (MLWP). Building
+    on work from Met Norway, the model operates on a quarter degree resolution
+    globally, with a 6 km refinement over the contiguous United States, using
+    training data from NOAA’s archives of Global Forecast System (GFS) and the
+    regional High Resolution Rapid Refresh (HRRR) analysis. We present an evaluation
+    of the model’s forecast skill compared to archived HRRR and GFS forecasts. In
+    terms of Mean Squared Error (MSE), the neural network generally outperforms GFS
+    and HRRR up to about 10 days, with significant skill gain in the near surface
+    and low-level atmosphere. Thus, the model shows promise at providing the best of
+    both worlds, capturing both the short and medium range timescales accurately.
+    However, we also show a quantitative analysis of precipitation prediction skill,
+    which exposes shortcomings in terms of its ability to represent precipitation
+    patterns. The assessment motivates future work in order to improve the
+    representation of precipitation extremes, including the injection of
+    stochasticity into the model along with a variance-penalty loss term, or a
+    feature-based loss.
+
+\end{abstract}
+% ----------------------------------------------------------------
+
+\section{Introduction}
+
+The introduction motivates the problem and situates the work within
+the existing literature \citep{nipen_regional_2026}. Begin by describing the
+broad scientific context, then narrow to the specific gap this paper
+addresses. Conclude with a brief outline of the paper's structure.
+
+Body text is set in 11\,pt XCharter, a beautiful humanist serif
+designed by Michael Sharpe. Inline math uses the matching
+\texttt{newtxmath} fonts: $f(\mathbf{x}) = \bm{\theta}^\top \mathbf{x}
++ b$. Emphasis appears in \textit{italics} and strong emphasis in
+\textbf{bold}.
+
+\section{Methods}
+
+\subsection{Model Architecture}
+
+Subsections carry 11\,pt bold headings. The model is defined by the
+mapping
+\begin{equation}
+    \hat{\mathbf{y}} = g\bigl(f(\mathbf{x};\, \bm{\theta})\bigr),
+    \label{eq:model}
+\end{equation}
+where $f : \mathbb{R}^{n} \to \mathbb{R}^{m}$ is the encoder,
+$g : \mathbb{R}^{m} \to \mathbb{R}^{p}$ is the decoder, and
+$\bm{\theta}$ collects all learnable parameters. We refer to
+\cref{eq:model} throughout.
+
+\subsection{Training Objective}
+
+The loss function combines a reconstruction term and a regulariser:
+\begin{equation}
+    \mathcal{L}(\bm{\theta}) =
+        \underbrace{\|\hat{\mathbf{y}} - \mathbf{y}\|^2}_{\text{MSE}}
+        + \lambda \, \|\bm{\theta}\|_2^2 .
+\end{equation}
+
+\subsubsection{Implementation details}
+
+Subsubsection headings are bold-italic at body size. Training uses
+the Adam optimiser with a cosine-decay learning-rate schedule.
+
+\section{Results}
+
+\begin{figure}[t]
+    \centering
+    % Replace with your actual figure:
+    \includegraphics[width=\textwidth]{rmse_surface.png}
+    \caption{A descriptive caption that explains what is shown,
+        including the key take-away. The label ``Figure~1.'' is
+        automatically typeset in bold, followed by the body of the
+        caption in regular weight.}
+    \label{fig:main}
+\end{figure}
+
+%\begin{table}[t]
+%    \centering
+%    \caption{Comparison of model performance across benchmarks.
+%        Best result in each column shown in \textbf{bold}.}
+%    \label{tab:metrics}
+%    \begin{tabular}{lccc}
+%        \toprule
+%        Method          & RMSE $\downarrow$ & ACC $\uparrow$ & CRPS $\downarrow$ \\
+%        \midrule
+%        Baseline A      & 1.42  & 0.81  & 0.63 \\
+%        Baseline B      & 1.38  & 0.83  & 0.61 \\
+%        \textbf{Ours}   & \textbf{1.21}  & \textbf{0.87}  & \textbf{0.54} \\
+%        \bottomrule
+%    \end{tabular}
+%\end{table}
+
+\section{Discussion}
+
+\section{Conclusion}
+
+\section*{Acknowledgements}
+
+% ----------------------------------------------------------------
+%  References  (compile with bibtex or biber)
+% ----------------------------------------------------------------
+\bibliography{references}
+
+% ================================================================
+\end{document}

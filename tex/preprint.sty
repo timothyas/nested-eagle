@@ -1,0 +1,204 @@
+% preprint.sty  –  Single-column scientific preprint style
+%
+% Usage:
+%   \documentclass[11pt]{article}
+%   \usepackage{preprint}
+%
+% Accent colour (default: steel blue #2B5F8A). Override before \begin{document}:
+%   \definecolor{accent}{HTML}{76b900}   % e.g. NVIDIA green
+%
+% Short running title (optional):
+%   \shorttitle{My Short Title}
+%
+% Title block — set metadata then call \maketitle:
+%   \title{Full Title}
+%   \authors{A. Author\textsuperscript{1}, B. Author\textsuperscript{2}}
+%   \affiliations{%
+%     \textsuperscript{1}Institution One\\
+%     \textsuperscript{2}Institution Two}
+%   \email{author@email.com}
+%   \date{\today}            % optional; omit to suppress
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{preprint}[2026/05/20 v1.0 Scientific Preprint Style]
+
+% ================================================================
+%  1. Font & Encoding
+% ================================================================
+\RequirePackage[T1]{fontenc}
+\RequirePackage{XCharter}                          % main serif font
+\RequirePackage[varqu,varl]{inconsolata}           % monospace (emails, code)
+\RequirePackage{amssymb}                           % load before newtxmath to avoid \Bbbk conflict
+\RequirePackage[charter,smallerops]{newtxmath}     % math matching XCharter
+\RequirePackage{microtype}                         % microtypography
+
+% ================================================================
+%  2. Page Geometry  (matches the analysed XCharter preprints)
+% ================================================================
+\RequirePackage[
+    a4paper,
+    left   = 61.6pt,
+    right  = 60.6pt,
+    top    = 55pt,
+    bottom = 55pt,
+    headsep    = 18pt,
+    headheight = 20.2pt,
+    footskip   = 28pt
+]{geometry}
+
+% ================================================================
+%  3. Colour
+% ================================================================
+\RequirePackage{xcolor}
+
+% Default accent colour – steel blue.  Override with
+%   \definecolor{accent}{HTML}{RRGGBB}  before \begin{document}.
+\definecolor{accent}{HTML}{2B5F8A}
+
+% ================================================================
+%  4. Hyperlinks
+% ================================================================
+\RequirePackage[
+    colorlinks = true,
+    linkcolor  = accent,
+    citecolor  = accent,
+    urlcolor   = accent
+]{hyperref}
+
+% ================================================================
+%  5. Section Headings
+% ================================================================
+\RequirePackage{titlesec}
+
+\titleformat{\section}
+    {\fontsize{13}{15.6}\bfseries\selectfont}  % format
+    {\thesection.}                              % label
+    {0.5em}{}                                   % sep, before-code
+
+\titleformat{\subsection}
+    {\fontsize{11}{13.2}\bfseries\selectfont}
+    {\thesubsection.}
+    {0.5em}{}
+
+\titleformat{\subsubsection}
+    {\normalsize\bfseries\itshape}
+    {}
+    {0em}{}
+
+\titlespacing*{\section}
+    {0pt}{2.5ex plus .5ex minus .2ex}{1ex plus .1ex}
+\titlespacing*{\subsection}
+    {0pt}{2ex plus .4ex minus .2ex}{0.8ex plus .1ex}
+\titlespacing*{\subsubsection}
+    {0pt}{1.5ex plus .3ex minus .1ex}{0.4ex}
+
+% ================================================================
+%  6. Running Heads
+% ================================================================
+\RequirePackage{fancyhdr}
+
+\newcommand{\@shorttitle}{}
+\newcommand{\shorttitle}[1]{\renewcommand{\@shorttitle}{#1}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{%
+    \fontsize{8}{10}\itshape\selectfont\@shorttitle}
+\fancyhead[R]{%
+    \fontsize{8}{10}\selectfont\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{%
+    {\color{accent}\rule{\headwidth}{\headrulewidth}}\vskip -\headrulewidth}
+
+% First page: no header, centred page number in footer
+\fancypagestyle{plain}{%
+    \fancyhf{}
+    \fancyfoot[C]{\fontsize{8}{10}\selectfont\thepage}
+    \renewcommand{\headrulewidth}{0pt}}
+
+% ================================================================
+%  7. Title Block  (\maketitle reads from \title, \authors, etc.)
+% ================================================================
+
+% \authors{...}  — comma-separated names with \textsuperscript{} markers
+\newcommand{\@preprintauthors}{}
+\newcommand{\authors}[1]{\renewcommand{\@preprintauthors}{#1}}
+
+% \affiliations{...}  — one per line with \\, using \textsuperscript{} markers
+\newcommand{\@preprintaffils}{}
+\newcommand{\affiliations}[1]{\renewcommand{\@preprintaffils}{#1}}
+
+% \email{...}  — corresponding author address(es)
+\newcommand{\@preprinemail}{}
+\newcommand{\email}[1]{\renewcommand{\@preprinemail}{#1}}
+
+% \title{...} and \date{...} are standard LaTeX; use them as normal.
+
+\renewcommand{\maketitle}{%
+    \thispagestyle{plain}%
+    \begingroup
+    \setlength{\parindent}{0pt}%
+    {\fontsize{21}{25}\bfseries\selectfont\@title\par}%
+    \vspace{1em}%
+    \ifx\@preprintauthors\@empty\else
+        {\fontsize{9}{11}\bfseries\selectfont\@preprintauthors\par}%
+        \vspace{3pt}%
+    \fi
+    \ifx\@preprintaffils\@empty\else
+        {\fontsize{8}{10}\selectfont\@preprintaffils\par}%
+        \vspace{2pt}%
+    \fi
+    \ifx\@preprinemail\@empty\else
+        {\fontsize{8}{10}\itshape\selectfont
+         \IfSubStr{\@preprinemail}{,}{* Corresponding Authors:\space}{* Corresponding Author:\space}}%
+        {\fontsize{8}{10}\ttfamily\selectfont\@preprinemail\par}%
+        \vspace{2pt}%
+    \fi
+    \endgroup
+    \vspace{1.2em}%
+}
+
+% Internal rule used at the end of the abstract environment
+\newcommand{\@preprintrule}{%
+    {\color{accent}\noindent\rule{\textwidth}{0.4pt}}\vspace{0.8em}}
+
+% ================================================================
+%  8. Abstract Environment
+% ================================================================
+\renewenvironment{abstract}{%
+    \noindent{\fontsize{13}{15.6}\bfseries\selectfont Abstract}\par
+    \vspace{0.4em}%
+    \normalsize\noindent\ignorespaces
+}{%
+    \par\vspace{1em}%
+    \@preprintrule}
+
+% ================================================================
+%  9. Figure & Table Captions
+% ================================================================
+\RequirePackage[
+    font       = {small},
+    labelfont  = {bf},
+    labelsep   = period,
+    justification = justified,
+    singlelinecheck = false
+]{caption}
+
+% ================================================================
+% 10. Tables
+% ================================================================
+\RequirePackage{booktabs}
+\setlength{\heavyrulewidth}{0.9pt}
+\setlength{\lightrulewidth}{0.4pt}
+
+% ================================================================
+% 11. Lists
+% ================================================================
+\RequirePackage{enumitem}
+\setlist{itemsep=0.3ex, topsep=0.5ex, parsep=0pt, leftmargin=1.5em}
+
+% ================================================================
+% 12. Paragraph Spacing
+% ================================================================
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{0pt}
