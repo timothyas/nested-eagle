@@ -1,0 +1,9 @@
+checkpoint_path: ${SCRATCH}/nested-eagle/0.25deg-06km/production/gfs-only/stage1c/checkpoint/f4e0d27427984baa8d51a3780a69d86f/inference-last.ckpt
+output_path: ${SCRATCH}/nested-eagle/case-studies/la-fires/global-eagle
+lead_time: 360
+input_dataset_kwargs:
+  dataset: /pscratch/sd/t/timothys/nested-eagle/0.25deg-06km/data/testing/gfs.zarr
+
+start_date: 2025-01-01T12
+end_date: 2025-01-07T12
+freq: 24h

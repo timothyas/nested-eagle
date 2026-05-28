@@ -12,7 +12,7 @@ import pandas as pd
 from query_obs import STATIONS, THRESHOLDS_MS
 
 INFILE = "socal_wind_obs_jan2025.parquet"
-OUTFILE = "socal_wind_timeseries.png"
+OUTFILE = "figures/socal_wind_timeseries.png"
 
 MS_TO_MPH = 2.237
 

@@ -1,0 +1,55 @@
+mover:
+  name: mpidatamover
+
+directories:
+  zarr:  ${SCRATCH}/nested-eagle/case-studies/la-fires/gfs.forecasts.zarr
+  cache: ${SCRATCH}/nested-eagle/case-studies/la-fires/cache/gfs
+  logs:  ${SCRATCH}/nested-eagle/case-studies/la-fires/logs/gfs
+
+source:
+  name: gfs_archive
+  t0:
+    start: 2025-01-01T12
+    end: 2025-01-07T12
+    freq: 24h
+
+  fhr:
+    start: 0
+    end: 360
+    step: 6
+
+  variables:
+    # 3D Prognostic
+    - gh
+    - u
+    - v
+    - t
+    - q
+    # 2D Prognostic
+    - sp
+    - u10
+    - v10
+    - t2m
+    - sh2
+    # extra
+    - prmsl
+    - mslet
+    - orog
+
+  levels:
+    - 250
+    - 500
+    - 850
+
+  slices:
+    sel:
+      latitude: [89.9, -89.9]
+
+target:
+  name: base
+  chunks:
+    t0: 1
+    fhr: 1
+    level: -1
+    latitude: -1
+    longitude: -1
