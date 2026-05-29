@@ -31,6 +31,8 @@ source:
     - v10
     - t2m
     - sh2
+    # extra
+    - mslma
 
   levels:
     - 100
