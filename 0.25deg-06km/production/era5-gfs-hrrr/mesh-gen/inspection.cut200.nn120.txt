@@ -1,0 +1,35 @@
+
+📦 Path       : /pscratch/sd/t/timothys/graph.pt
+💽 Size       : 8 MiB (8365312)
+
+🪩  Nodes summary
+
+   Nodes name │ Num. nodes │  Attributes │ Attribute dim │ Min. latitude │ Max. latitude │ Min. longitude │ Max. longitude
+   ───────────┼────────────┼─────────────┼───────────────┼───────────────┼───────────────┼────────────────┼───────────────
+   data       │      64800 │ area_weight │             1 │         -89.5 │          89.5 │            0.5 │          359.5
+   hidden     │      10944 │             │             0 │      -88.5722 │       88.5722 │              0 │        358.269
+   ───────────┴────────────┴─────────────┴───────────────┴───────────────┴───────────────┴────────────────┴───────────────
+
+
+🌐  Edges summary
+
+   Source │ Target │ Num. edges │ Isolated Source │ Isolated Target │ Min edges/target │ Max edges/target │ Attribute dim │                     Attributes
+   ───────┼────────┼────────────┼─────────────────┼─────────────────┼──────────────────┼──────────────────┼───────────────┼───────────────────────────────
+   data   │ hidden │     180608 │               0 │               0 │                9 │              120 │             3 │ edge_length(1D), edge_dirs(2D)
+   hidden │ data   │     194400 │               0 │               0 │                3 │                3 │             3 │ edge_length(1D), edge_dirs(2D)
+   ───────┴────────┴────────────┴─────────────────┴─────────────────┴──────────────────┴──────────────────┴───────────────┴───────────────────────────────
+
+
+📊 Attribute distributions
+
+   Type │ Source        │        Name │         Dtype │       Min. │         Mean │    Max. │ Std. dev.
+   ─────┼───────────────┼─────────────┼───────────────┼────────────┼──────────────┼─────────┼──────────
+   Node │ data          │ area_weight │ torch.float32 │ 0.00872711 │     0.636655 │       1 │  0.307752
+   Edge │ data-->hidden │ edge_length │ torch.float32 │  0.0104896 │     0.658878 │       1 │  0.237558
+   Edge │ data-->hidden │   edge_dirs │ torch.float32 │   -1.41421 │ -0.000981324 │ 1.41421 │         1
+   Edge │ hidden-->data │ edge_length │ torch.float32 │ 0.00799623 │     0.530881 │       1 │    0.2029
+   Edge │ hidden-->data │   edge_dirs │ torch.float32 │   -1.41421 │  0.000408219 │ 1.41421 │         1
+   ─────┴───────────────┴─────────────┴───────────────┴────────────┴──────────────┴─────────┴──────────
+
+🔋 Graph ready.
+
