@@ -27,14 +27,14 @@ from query_obs import STATIONS, THRESHOLDS_MS
 SCRATCH = os.environ["SCRATCH"]
 LA_FIRES = os.path.join(SCRATCH, "nested-eagle/case-studies/la-fires")
 
-OBS_FILE = "socal_wind_obs_jan2025.parquet"
+OBS_FILE = "socal_bbox_obs_jan2025.parquet"
 
 EAGLE_DIR        = os.path.join(LA_FIRES, "nested-eagle")
 GLOBAL_EAGLE_DIR = os.path.join(LA_FIRES, "global-eagle")
 HRRR_ZARR        = os.path.join(LA_FIRES, "hrrr.forecasts.zarr")
 GFS_ZARR         = os.path.join(LA_FIRES, "gfs.forecasts.zarr")
 
-TARGET_STATIONS = ["KVNY", "KBUR"]
+TARGET_STATIONS = ["KVNY", "KBUR", "KMWS"]
 MODELS = ["Nested-EAGLE", "Global-EAGLE", "HRRR", "GFS"]
 
 # Jan 1–7 12Z every 24 h

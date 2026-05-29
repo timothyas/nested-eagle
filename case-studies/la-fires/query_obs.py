@@ -32,6 +32,8 @@ STATIONS = {
     "KEMT": {"name": "El Monte",                "lat": 34.086, "lon": -118.035, "tier": "A"},
     "KPOC": {"name": "Brackett Field/La Verne", "lat": 34.092, "lon": -117.782, "tier": "A"},
     "KONT": {"name": "Ontario Intl",            "lat": 34.056, "lon": -117.601, "tier": "A"},
+    # Tier A — Mountain
+    "KMWS": {"name": "Mt. Wilson",               "lat": 34.220, "lon": -118.070, "tier": "A"},
     # Tier B — Coastal
     "KLAX": {"name": "Los Angeles Intl",        "lat": 33.943, "lon": -118.408, "tier": "B"},
     "KHHR": {"name": "Hawthorne Muni",          "lat": 33.923, "lon": -118.335, "tier": "B"},
