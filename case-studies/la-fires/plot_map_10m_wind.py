@@ -19,22 +19,25 @@ import pandas as pd
 import xarray as xr
 
 from eagle.tools.data import open_anemoi_inference_dataset, open_forecast_zarr_dataset
+from query_obs import STATIONS
 
 SCRATCH = os.environ["SCRATCH"]
 LA_FIRES = os.path.join(SCRATCH, "nested-eagle/case-studies/la-fires")
 
 # ── Parameters ────────────────────────────────────────────────────────────────
 T0  = "2025-01-06T12"
-FHR = 24
+FHR = 48
 
 VALID_TIME = pd.Timestamp(T0) + pd.Timedelta(hours=FHR)
-SP_LEVELS  = np.arange(972, 1024, 4)   # surface pressure contour levels (hPa)
-WSPD_VMAX  = 10.0                       # m/s, shared colorscale
+SP_LEVELS   = np.arange(972, 1024, 4)          # surface pressure contour levels (hPa)
+WSPD_VMAX   = 10.0                             # m/s, shared colorscale
+OROG_LEVELS = [200, 500, 1000, 1500, 2000, 2500]  # orography contour levels (m)
 
-# SoCal fixed bounds (east/north/south); west is computed from HRRR at load time
-_EAST  = -113.5
-_NORTH =   40
-_SOUTH =   30
+# SoCal fixed bounds
+_WEST  = -120.5
+_EAST  = -116.0
+_NORTH =   35.8
+_SOUTH =   32.5
 
 # ── Data paths ────────────────────────────────────────────────────────────────
 EAGLE_DIR        = os.path.join(LA_FIRES, "nested-eagle")
@@ -101,15 +104,26 @@ def load_gfs() -> xr.Dataset:
     return _select(ds)
 
 
-def _hrrr_west_extent(ds: xr.Dataset) -> float:
-    """Minimum longitude of the HRRR grid within the SoCal latitude band."""
-    lat_name = "latitude" if "latitude" in ds.coords else "lat"
-    lon_name = "longitude" if "longitude" in ds.coords else "lon"
-    lat = ds[lat_name].values
-    lon = ds[lon_name].values
-    lon = np.where(lon > 180, lon - 360, lon)
-    mask = (lat >= _SOUTH) & (lat <= _NORTH)
-    return float(lon[mask].min())
+def load_hrrr_orog() -> xr.Dataset:
+    ds = open_forecast_zarr_dataset(
+        path=HRRR_ZARR,
+        t0=T0,
+        vars_of_interest=["orog"],
+        load=True,
+        reshape_cell_to_2d=True,
+    )
+    return ds.squeeze()
+
+
+def load_gfs_orog() -> xr.Dataset:
+    ds = open_forecast_zarr_dataset(
+        path=GFS_ZARR,
+        t0=T0,
+        vars_of_interest=["orog"],
+        load=True,
+        reshape_cell_to_2d=True,
+    )
+    return ds.squeeze()
 
 
 # ── Plotting ──────────────────────────────────────────────────────────────────
@@ -123,7 +137,7 @@ def _latlon(ds: xr.Dataset) -> tuple[np.ndarray, np.ndarray]:
     return lat, lon
 
 
-def plot_panel(ax, ds: xr.Dataset, title: str, map_extent: list):
+def plot_panel(ax, ds: xr.Dataset, title: str, map_extent: list, ds_orog: xr.Dataset):
     lat, lon = _latlon(ds)
     wspd = _wspd(ds).values
     # SP expected in Pa; convert to hPa for contour levels
@@ -149,6 +163,22 @@ def plot_panel(ax, ds: xr.Dataset, title: str, map_extent: list):
     ax.add_feature(cfeature.COASTLINE, lw=0.6, edgecolor="gray")
     ax.add_feature(cfeature.BORDERS, lw=0.4, linestyle=":", edgecolor="gray")
     ax.add_feature(cfeature.STATES, lw=0.3, edgecolor="gray")
+
+    lat_o, lon_o = _latlon(ds_orog)
+    ax.contour(
+        lon_o, lat_o, ds_orog["orog"].values,
+        levels=OROG_LEVELS,
+        colors="black",
+        linewidths=0.4,
+        alpha=0.4,
+        transform=ccrs.PlateCarree(),
+    )
+
+    stn_lats = [m["lat"] for m in STATIONS.values()]
+    stn_lons = [m["lon"] for m in STATIONS.values()]
+    ax.scatter(stn_lons, stn_lats, transform=ccrs.PlateCarree(),
+               s=12, color="white", edgecolors="black", linewidths=0.5, zorder=5)
+
     ax.set_title(title, loc="left", fontsize=10)
 
     return im
@@ -167,13 +197,14 @@ def main():
     ds_hrrr = load_hrrr()
     print("Loading GFS...")
     ds_gfs = load_gfs()
+    print("Loading HRRR orography...")
+    ds_hrrr_orog = load_hrrr_orog()
+    print("Loading GFS orography...")
+    ds_gfs_orog = load_gfs_orog()
 
-    west = _hrrr_west_extent(ds_hrrr)
-    map_extent = [west, _EAST, _SOUTH, _NORTH]
-    print(f"Map extent: {map_extent}")
+    map_extent = [_WEST, _EAST, _SOUTH, _NORTH]
 
-    proj = ccrs.LambertConformal(central_longitude=-118, central_latitude=34,
-                                 standard_parallels=(33, 45))
+    proj = ccrs.PlateCarree()
     fig, axes = plt.subplots(
         2, 2,
         figsize=(14, 9),
@@ -182,14 +213,14 @@ def main():
     )
 
     panels = [
-        (axes[0, 0], ds_nested, "Nested-EAGLE"),
-        (axes[0, 1], ds_global, "Global-EAGLE"),
-        (axes[1, 0], ds_hrrr,   "HRRR"),
-        (axes[1, 1], ds_gfs,    "GFS"),
+        (axes[0, 0], ds_nested, "Nested-EAGLE", ds_hrrr_orog),
+        (axes[0, 1], ds_global, "Global-EAGLE", ds_gfs_orog),
+        (axes[1, 0], ds_hrrr,   "HRRR",         ds_hrrr_orog),
+        (axes[1, 1], ds_gfs,    "GFS",           ds_gfs_orog),
     ]
 
-    for ax, ds, title in panels:
-        im = plot_panel(ax, ds, title, map_extent)
+    for ax, ds, title, ds_orog in panels:
+        im = plot_panel(ax, ds, title, map_extent, ds_orog)
 
     cbar = fig.colorbar(im, ax=axes, orientation="horizontal", fraction=0.05,
                         pad=0.04, aspect=50, extend="max", shrink=0.8)
