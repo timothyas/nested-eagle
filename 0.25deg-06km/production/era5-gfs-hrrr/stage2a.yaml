@@ -556,7 +556,7 @@ training:
   max_steps: 60000
   lr:
     warmup: 1000
-    rate: 3.125e-05
+    rate: 6.25e-06
     iterations: ${training.max_steps}
     min: 3.0e-07
   submodules_to_freeze: []
