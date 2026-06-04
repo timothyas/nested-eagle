@@ -24,7 +24,7 @@ LA_FIRES = os.path.join(SCRATCH, "nested-eagle/case-studies/la-fires")
 MESH_DIR = os.path.join(SCRATCH, "nested-eagle/0.25deg-06km/mesh-gen/csmswt-trim25")
 
 # ── Parameters ────────────────────────────────────────────────────────────────
-T0  = "2025-01-07T12"
+T0  = "2025-01-02T12"
 FHR = 0
 
 VALID_TIME = pd.Timestamp(T0) + pd.Timedelta(hours=FHR)
@@ -215,7 +215,11 @@ def main():
     print("Loading Global-EAGLE...")
     ds_global = load_global_eagle()
     print("Loading HRRR...")
-    ds_hrrr = load_hrrr()
+    try:
+        ds_hrrr = load_hrrr()
+    except:
+        print("couldnt do it")
+        ds_hrrr = None
     print("Loading GFS...")
     ds_gfs = load_gfs()
 
@@ -235,7 +239,8 @@ def main():
     ]
 
     for ax, ds, title in panels:
-        im = plot_panel(ax, ds, title)
+        if ds is not None:
+            im = plot_panel(ax, ds, title)
 
     cbar = fig.colorbar(im, ax=axes, orientation="horizontal", fraction=0.05, pad=0.04, aspect=50, extend="max", shrink=.8)
     cbar.set_label("500 hPa Wind Speed (m s$^{-2}$)")

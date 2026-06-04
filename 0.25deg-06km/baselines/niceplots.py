@@ -25,15 +25,23 @@ def get_units(name):
 
 def get_color(label):
     color = None
+    linestyle = None
     if "Nested" in label:
         color = "C0"
+        if "GFS Only ICs" in label:
+            color = "C3"
+            linestyle = "--"
+    elif "Global-EAGLE" in label:
+        color = "C5"
+        if "GFS+HRRR ICs" in label:
+            color = "C7"
+            linestyle = "--"
     elif "HRRR" in label:
         color = "C1"
     elif "GFS" in label:
         color = "C2"
-    elif "Global-EAGLE" in label:
-        color = "C5"
-    return color
+
+    return color, linestyle
 
 def make_one_legend(fig, axs):
     handles, labels = axs.flatten()[0].get_legend_handles_labels()
@@ -57,6 +65,7 @@ def single_plot(ax, dsdict, metric_name, varname, sel=None, **kwargs):
     estimator = kwargs.pop("estimator", "median")
     for label, xds in dsdict.items():
 
+        color, linestyle = get_color(label)
         plotme = xds[varname] if sel is None else xds[varname].sel(**sel)
         df = plotme.to_dataframe().reset_index()
         sns.lineplot(
@@ -65,7 +74,8 @@ def single_plot(ax, dsdict, metric_name, varname, sel=None, **kwargs):
             y=varname,
             ax=ax,
             label=label,
-            color=get_color(label),
+            color=color,
+            linestyle=linestyle,
             estimator=estimator,
             **kwargs,
         )
@@ -78,6 +88,9 @@ def single_plot(ax, dsdict, metric_name, varname, sel=None, **kwargs):
         xlabel = "Lead Time (days)"
 
     title = f"{nice_names(varname)}  ({get_units(varname)})"
+    if sel is not None:
+        if "level" in sel:
+            title = f"{sel['level']} hPa " + title
     ax.set(
         ylabel=metric_name if ax.get_subplotspec().is_first_col() else "",
         xlabel=xlabel if ax.get_subplotspec().is_last_row() else "",
@@ -131,6 +144,34 @@ def plot_level_vars(
             sel["level"] = level
             single_plot(ax=ax, dsdict=dsdict, metric_name=metric_name, varname=varname, sel=sel, **kwargs)
             ax.legend(title=f"{level} hPa", frameon=False)
+
+    if one_legend:
+        make_one_legend(fig, axs)
+    return fig, axs
+
+
+def plot_selection(
+    dsdict,
+    metric_name,
+    variables=("10m_wind_speed", "2m_temperature", {"geopotential_height": 500}, {"temperature": 850}, {"wind_speed": 250}),
+    one_legend=True,
+    **kwargs,
+):
+    ncols = len(variables)
+    fig, axs = plt.subplots(1, ncols, figsize=(5.25*ncols, 4.1), constrained_layout=True)
+
+    sel = kwargs.pop("sel", {})
+    for variable, ax in zip(variables, axs):
+        if isinstance(variable, str):
+            varname = variable
+            sel = None
+        elif isinstance(variable, dict):
+            varname = next(iter(variable.keys()))
+            sel = {"level": next(iter(variable.values()))}
+        else:
+            raise TypeError
+
+        single_plot(ax=ax, dsdict=dsdict, metric_name=metric_name, varname=varname, sel=sel, **kwargs)
 
     if one_legend:
         make_one_legend(fig, axs)
