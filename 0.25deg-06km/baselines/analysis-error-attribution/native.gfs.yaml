@@ -1,0 +1,32 @@
+mover:
+  name: mpidatamover
+
+directories:
+  zarr:  ${SCRATCH}/nested-eagle/0.25deg-06km/data/native/gfs.zarr
+  cache: ${SCRATCH}/nested-eagle/0.25deg-06km/data/native/cache/gfs
+  logs:  ${SCRATCH}/nested-eagle/0.25deg-06km/data/native/logs/gfs
+
+source:
+  name: gfs_archive
+  t0:
+    start: 2024-02-01T00
+    end: 2024-02-02T18
+    freq: 6h
+
+  fhr:
+    start: 0
+    end: 0
+    step: 6
+
+  variables:
+    - t_surface
+    - lsm
+    - orog
+
+target:
+  name: base
+  chunks:
+    t0: 1
+    fhr: 1
+    latitude: -1
+    longitude: -1
