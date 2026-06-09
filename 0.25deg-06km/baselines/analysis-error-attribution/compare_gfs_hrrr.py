@@ -268,6 +268,19 @@ def main(out_dir):
     metrics.to_netcdf(mpath)
     print(f"Wrote {mpath}")
 
+    # Per-cycle difference time series d(field, t0, station) -- the reusable
+    # primitive behind var_diff (var_t(d) == var_diff), needed for the temporal
+    # (season/diurnal) variance decomposition. Small: 2 x ~293 x ~3585 floats.
+    field = xr.DataArray(FIELDS, dims="field", name="field")
+    diffs = xr.concat([hrrr[f] - gfs[f] for f in FIELDS], dim=field).to_dataset(name="diff")
+    diffs.attrs.update(
+        description="per-cycle HRRR - GFS analysis (fhr=0) difference at obs stations",
+        sign_convention="diff = HRRR - GFS", test_period=f"{TEST_START}..{TEST_END}")
+    diffs["diff"].attrs["long_name"] = "HRRR - GFS at fhr=0 (valid time = t0)"
+    dpath = os.path.join(out_dir, "gfs_vs_hrrr.diffs.nc")
+    diffs.to_netcdf(dpath)
+    print(f"Wrote {dpath}")
+
     print("Sampling terrain to stations ...")
     orog_g, slope_g = sample_topo(GFS_OROG, gfs_grid, gfs_rg, s)
     orog_h, slope_h = sample_topo(HRRR_OROG, hrrr_grid, hrrr_rg, s)

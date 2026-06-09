@@ -29,6 +29,7 @@ ROUGHNESS = f"{DATA}/gfs_vs_hrrr.roughness.nc"
 DATASETS = {
     "gfs_vs_hrrr": dict(
         metrics=f"{DATA}/gfs_vs_hrrr.metrics.nc",
+        diffs=f"{DATA}/gfs_vs_hrrr.diffs.nc",
         tag="gfs_vs_hrrr",
         a="hrrr", b="gfs",                 # var_<a>/var_<b>, mean_<a>/mean_<b>
         a_label="HRRR", b_label="GFS",
@@ -37,6 +38,7 @@ DATASETS = {
     ),
     "nested_vs_global": dict(
         metrics=f"{DATA}/nested_vs_global.fhr24.metrics.nc",
+        diffs=f"{DATA}/nested_vs_global.fhr24.diffs.nc",
         tag="nested_vs_global.fhr24",
         a="nested", b="global",
         a_label="Nested-EAGLE", b_label="Global-EAGLE",

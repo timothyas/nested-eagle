@@ -222,6 +222,20 @@ def main(out_dir):
     metrics.to_netcdf(mpath)
     print(f"Wrote {mpath}")
 
+    # Per-cycle difference time series for the temporal variance decomposition
+    # (var_t(d) == var_diff). t0 is the init; valid time = t0 + 24 h.
+    field = xr.DataArray(FIELDS, dims="field", name="field")
+    diffs = xr.concat([nested[f] - global_[f] for f in FIELDS],
+                      dim=field).to_dataset(name="diff")
+    diffs.attrs.update(
+        description="per-cycle Nested - Global 24 h forecast difference at obs stations",
+        sign_convention="diff = Nested - Global", lead_hours=LEAD_HOURS,
+        test_period=f"{TEST_START}..{TEST_END}")
+    diffs["diff"].attrs["long_name"] = "Nested - Global at fhr=24 (valid = t0 + 24 h)"
+    dpath = os.path.join(out_dir, "nested_vs_global.fhr24.diffs.nc")
+    diffs.to_netcdf(dpath)
+    print(f"Wrote {dpath}")
+
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(

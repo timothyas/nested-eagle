@@ -17,7 +17,9 @@ but tracks terrain only weakly, and HRRR does **not** resolve systematically mor
 temporal variability than GFS. Finally, when two ML models inherit these analyses
 (Nested-EAGLE vs Global-EAGLE), the **2 m-T elevation/lapse artifact persists into their
 24 h forecast essentially unchanged, while the 10 m-wind roughness effect is inherited but
-decays by roughly half.**
+decays by roughly half.** A temporal decomposition recovers part of that dominant variance
+as a **robust diurnal+seasonal cycle (~32% for 2 m T, ~10% for wind)**; the rest is
+synoptic.
 
 ---
 
@@ -117,6 +119,14 @@ to 0.32. But the **slope is stable** (OLS −3 K/km in the core rising to −6.2
 *core* correlation is **range restriction** (±50 m carries only ≈ ±0.3 K of lapse signal,
 below the bias scatter from diurnal sampling and representativeness).
 
+*Rigor note.* Leverage is the **only** inflation here — unlike the temporal decomposition
+(Finding 3 follow-on), this regression fits 2 parameters from 3,585 stations, so the
+finite-sample/over-fit correction is nil (adjusted R² = raw R² = 0.440 to four decimals).
+If anything the per-station bias, being a 293-cycle mean, carries sampling noise (~2% of
+the across-station bias variance) that slightly *deflates* R². So the honest
+elevation-explained share is the leverage-free bulk **ρ² ≈ 0.12**, not the tail-leveraged
+0.44.
+
 **Statement to use:** *a lapse-rate/elevation artifact where the terrain actually differs
 (complex western terrain) — strong there (ρ ≈ −0.8) and physically calibrated
 (slope ≈ lapse rate); for the ~80% of flat-terrain stations Δz ≈ 0 and the small residual
@@ -167,7 +177,9 @@ station-to-station wind-bias variance; the rest is the blob's vertical thickness
 sampling, representativeness). So it is a **central tendency, not a per-site predictor** —
 the binned-median spine descends monotonically (~+0.3 → −0.6 m/s) and saturates (slope
 −1.7 in the core, −0.37 in the tail), so the binned median, not a single slope, is the
-right summary.
+right summary. *Rigor note.* As in Finding 1 this R² needs no finite-sample correction
+(adjusted = raw to four decimals: 3,585 stations, one predictor) — and here raw R² ≈
+robust ρ² ≈ 0.18 already, so not even leverage applies; the ~18% is honest bulk.
 
 **Statement to use:** *where HRRR is rougher than GFS its 10 m wind is systematically
 slower — robust but modest (ρ ≈ −0.43, survives outlier deletion, present in every
@@ -248,6 +260,45 @@ remains the dominant and still-unexplained share of the MSE.*
 
 ---
 
+## Finding 5 — Temporal decomposition of the variance (diurnal/seasonal, not terrain)
+
+If terrain barely explains `var_diff`, what does? We decompose each station's per-cycle
+difference `d(t0)` by **time** — a two-way ANOVA over month (season) × hour-of-day
+(diurnal), the 293 cycles falling into 12 months × {00,06,12,18} UTC = 48 cells.
+
+*Statistics first.* With only ~6 cycles per cell, raw η² is badly inflated — 48 cell-means
+explain ≈ (48−1)/(293−1) ≈ **0.16 of the variance by chance alone** (confirmed by a label
+permutation null). We therefore report the **bias-corrected ε² (= adjusted R²)**, which is
+effect-size-aware and recovers the true share at any magnitude (verified by simulation).
+Significance is *not* the limiter — with 3,585 stations everything is formally significant;
+effect size is. The corrected shares of `var_diff`:
+
+| component | 2 m T | 10 m wind |
+|---|---:|---:|
+| season (month) | 0.12 | 0.04 |
+| diurnal (hour) | **0.16** | 0.04 |
+| interaction | 0.04 | ~0.01 |
+| **combined (det.)** | **0.32** | **0.10** |
+| residual (synoptic) | **0.68** | **0.90** |
+
+- **2 m T:** a robust **diurnal** cycle (ε²≈0.16, F≈23 — only 4 well-sampled groups, so
+  trustworthy) plus a **seasonal** cycle (≈0.12); together ~32%, with RMS ≈ 1.2 K vs the
+  synoptic residual's 1.4 K — *comparable*. The diurnal share concentrates over the
+  **interior/mountain West** (arid, high-insolation, deep boundary layers), where the two
+  models' surface/BL/radiation schemes diverge most on the daily cycle.
+- **10 m wind:** the deterministic clock is weak (~10%); the difference is **~90% synoptic**.
+- **Interaction caveat:** the season×hour term (a season-modulated diurnal cycle) is, after
+  correction, ~0.04 for T and ~0 for wind — at the edge of what 293 cycles can resolve.
+  Raw η² made it look ~0.12; that was mostly the finite-sample floor. Pinning it down needs
+  the full hourly archive, not 30 h-spaced cycles.
+
+**Statement to use:** *the variance terrain could not explain is partly explainable after
+all — but by time, not place: a robust diurnal+seasonal cycle (~32% for 2 m T, concentrated
+where the boundary-layer physics differ; ~10% for wind). The majority (≈68% T, ≈90% wind)
+is genuinely synoptic, consistent with the dynamics-driven persistence of Finding 4.*
+
+---
+
 ## Scripts and figures
 
 Pipeline (in `baselines/analysis-error-attribution/`, run in the `eagle` conda env;
@@ -259,6 +310,8 @@ heavy step ran on an interactive CPU node):
 | `compare_nested_global.py` | `nested_vs_global.fhr24.metrics.nc` — Nested−Global 24 h forecast difference at the same stations (Finding 4); runs on an interactive node |
 | `datasets.py` | dataset descriptors + the `--dataset {gfs_vs_hrrr,nested_vs_global}` flag every plot script takes (default `gfs_vs_hrrr`; same predictors, swapped metrics/labels) |
 | `fetch_roughness.py` | pulls GFS/HRRR `SFCR` from NOAA GRIB → `gfs_vs_hrrr.roughness.nc` (`rough_diff`) |
+| `decompose_variance.py` | `variance_decomp_*.png` + table — season/diurnal/interaction/residual shares of `var_diff` (Finding 5); reads the per-cycle `*.diffs.nc` |
+| `variance_significance.py` | finite-sample honesty: raw η² vs permutation null vs bias-corrected ε² (adjusted R²) + F, the basis for Finding 5's numbers |
 | `plot_roughness.py` | `roughness_relation_*.png`, `roughness_maps_*.png` — wind bias vs roughness |
 | `plot_roughness_diagnostic.py` | `roughness_diagnostic_*.png` — median spine + IQR ribbon, and Pearson/Spearman vs outlier deletion (answers the "blob through outliers" critique) |
 | `plot_terrain_relation.py` | `terrain_relation_gfs_vs_hrrr.png` — bias/rmse vs terrain (linear-count) |
