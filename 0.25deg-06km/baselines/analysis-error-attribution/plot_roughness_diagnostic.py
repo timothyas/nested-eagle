@@ -10,19 +10,17 @@ Right: robustness-to-leverage -- Pearson vs Spearman as we delete the most
        extreme |rough_diff| stations. Both stay flat (contrast the T-elevation
        case, where Pearson collapses), proving the trend is not outlier-driven.
 """
-import os
-
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 from scipy import stats
 
-DATA = f"{os.environ['SCRATCH']}/nested-eagle/0.25deg-06km/production/gfs-vs-hrrr"
+from datasets import parse_dataset, DEFAULT, ROUGHNESS
 
 
-def load():
-    m = xr.open_dataset(f"{DATA}/gfs_vs_hrrr.metrics.nc").sel(field="10m_wind_speed")
-    r = xr.open_dataset(f"{DATA}/gfs_vs_hrrr.roughness.nc")
+def load(ds=DEFAULT):
+    m = xr.open_dataset(ds["metrics"]).sel(field="10m_wind_speed")
+    r = xr.open_dataset(ROUGHNESS)
     rd = r["rough_diff"].values
     bias = m["bias"].values
     g = np.isfinite(rd) & np.isfinite(bias)
@@ -82,17 +80,17 @@ def leverage_panel(ax, rd, bias):
     ax.legend(loc="lower right", fontsize=9)
 
 
-def main():
-    rd, bias = load()
+def main(ds=DEFAULT):
+    rd, bias = load(ds)
     fig, axes = plt.subplots(1, 2, figsize=(13.5, 5.2), constrained_layout=True)
     spine_panel(axes[0], rd, bias)
     leverage_panel(axes[1], rd, bias)
-    fig.suptitle(f"Is the wind-roughness relationship a blob through outliers? "
-                 f"(n={rd.size})  -- No.", fontsize=13)
-    out = "roughness_diagnostic_gfs_vs_hrrr.png"
+    fig.suptitle(f"{ds['diff']}: is the wind-roughness relationship a blob through "
+                 f"outliers?  (n={rd.size})  -- No.", fontsize=13)
+    out = f"roughness_diagnostic_{ds['tag']}.png"
     fig.savefig(out, dpi=130)
     print(f"Wrote {out}")
 
 
 if __name__ == "__main__":
-    main()
+    main(parse_dataset(__doc__))

@@ -16,7 +16,6 @@ correspondence read as "same colour = consistent with the lapse rate".
 Output: terrain_maps_gfs_vs_hrrr.png
 """
 import math
-import os
 
 import numpy as np
 import xarray as xr
@@ -26,14 +25,14 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from scipy import stats
 
-DATA = f"{os.environ['SCRATCH']}/nested-eagle/0.25deg-06km/production/gfs-vs-hrrr"
-OUT = "terrain_maps_gfs_vs_hrrr.png"
+from datasets import parse_dataset, DEFAULT, TOPO
+
 EXTENT = [-125, -66, 23, 50]  # CONUS
 
 
-def load():
-    m = xr.open_dataset(f"{DATA}/gfs_vs_hrrr.metrics.nc").sel(field="2m_temperature")
-    t = xr.open_dataset(f"{DATA}/gfs_vs_hrrr.topo.nc")
+def load(ds=DEFAULT):
+    m = xr.open_dataset(ds["metrics"]).sel(field="2m_temperature")
+    t = xr.open_dataset(TOPO)
     lon = ((t["orog_diff"]["longitude"].values + 180) % 360) - 180  # 0..360 -> -180..180
     lat = t["orog_diff"]["latitude"].values
     return lon, lat, t["orog_diff"].values, m["bias"].values
@@ -76,11 +75,12 @@ def scatter_map(ax, lon, lat, c, vlim, cmap_name, title, cbar_label, fmt="%g"):
     cb.set_label(cbar_label, fontsize=9)
 
 
-def main():
-    lon, lat, orog_diff, bias = load()
-    fit = stats.linregress(orog_diff, bias)
+def main(ds=DEFAULT):
+    lon, lat, orog_diff, bias = load(ds)
+    g = np.isfinite(orog_diff) & np.isfinite(bias)
+    fit = stats.linregress(orog_diff[g], bias[g])
     resid = bias - (fit.intercept + fit.slope * orog_diff)
-    var_expl = 1 - np.nanvar(resid) / np.nanvar(bias)
+    var_expl = 1 - np.nanvar(resid[g]) / np.nanvar(bias[g])
 
     fig, axes = plt.subplots(1, 3, figsize=(20, 6),
                              subplot_kw={"projection": ccrs.PlateCarree()},
@@ -95,20 +95,21 @@ def main():
                 fmt="%.0f")
     b_lim = np.nanpercentile(np.abs(bias), 98)
     scatter_map(axes[1], lon, lat, bias, b_lim, "RdBu_r",
-                "HRRR - GFS 2 m T bias", "T bias [K]  (red = HRRR warmer)",
-                fmt="%.1f")
+                f"{ds['diff']} 2 m T bias",
+                f"T bias [K]  (red = {ds['a_label']} warmer)", fmt="%.1f")
     scatter_map(axes[2], lon, lat, resid, b_lim, "RdBu_r",
                 f"residual after lapse-rate removal\n"
                 f"({fit.slope*1000:.2f} K/km; {var_expl*100:.0f}% of bias variance removed)",
                 "residual T bias [K]", fmt="%.1f")
-    fig.suptitle("2 m T analysis bias tracks the resolved-terrain difference "
-                 f"(n={len(bias)} stations, HRRR - GFS)", fontsize=14)
-    fig.savefig(OUT, dpi=130)
-    print(f"Wrote {OUT}")
+    fig.suptitle(f"2 m T {ds['kind']} bias tracks the resolved-terrain difference "
+                 f"(n={int(g.sum())} stations, {ds['diff']})", fontsize=14)
+    out = f"terrain_maps_{ds['tag']}.png"
+    fig.savefig(out, dpi=130)
+    print(f"Wrote {out}")
     print(f"fitted lapse rate {-fit.slope*1000:.2f} K/km, r={fit.rvalue:+.2f}; "
           f"bias std {np.nanstd(bias):.2f} K -> residual std {np.nanstd(resid):.2f} K "
           f"({var_expl*100:.0f}% of variance removed)")
 
 
 if __name__ == "__main__":
-    main()
+    main(parse_dataset(__doc__))

@@ -21,6 +21,7 @@ from matplotlib.colors import LogNorm
 from scipy import stats
 
 from plot_terrain_relation import load_frame, binned_stat, FIELDS, LAPSE_REF
+from datasets import parse_dataset, DEFAULT
 
 
 def panel(ax, x, y, xlabel, ylabel, lapse_ref=False):
@@ -60,8 +61,8 @@ def panel(ax, x, y, xlabel, ylabel, lapse_ref=False):
     ax.legend(loc="best", fontsize=7, framealpha=0.75)
 
 
-def main():
-    frames = load_frame()
+def main(ds=DEFAULT):
+    frames = load_frame(ds)
     nrow = len(FIELDS)
     fig, axes = plt.subplots(nrow, 2, figsize=(13, 4.6 * nrow),
                              constrained_layout=True)
@@ -72,14 +73,14 @@ def main():
               lapse_ref=(f == "2m_temperature"))
         panel(axes[i, 1], df["slope_diff"].values, df["bias"].values,
               "HRRR - GFS slope [m/km]", f"{lab} bias [{unit}]")
-    fig.suptitle("Bias vs terrain difference, log-count density "
+    fig.suptitle(f"{ds['diff']} bias vs terrain difference, log-count density "
                  f"(n={len(frames['2m_temperature'])} stations; robust fit + "
                  "Spearman shown alongside leverage-sensitive OLS/Pearson)",
                  fontsize=13)
-    out = "terrain_relation_logcount_gfs_vs_hrrr.png"
+    out = f"terrain_relation_logcount_{ds['tag']}.png"
     fig.savefig(out, dpi=130)
     print(f"Wrote {out}")
 
 
 if __name__ == "__main__":
-    main()
+    main(parse_dataset(__doc__))

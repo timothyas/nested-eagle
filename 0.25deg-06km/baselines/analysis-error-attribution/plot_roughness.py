@@ -13,8 +13,6 @@ Figures:
   roughness_maps_gfs_vs_hrrr.png     : CONUS rough_diff next to wind bias, with
       matched colours (HRRR rougher = HRRR slower = same colour).
 """
-import os
-
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
@@ -24,13 +22,12 @@ from scipy import stats
 
 from plot_terrain_relation import binned_stat
 from plot_terrain_maps import scatter_map, EXTENT
+from datasets import parse_dataset, DEFAULT, ROUGHNESS
 
-DATA = f"{os.environ['SCRATCH']}/nested-eagle/0.25deg-06km/production/gfs-vs-hrrr"
 
-
-def load():
-    m = xr.open_dataset(f"{DATA}/gfs_vs_hrrr.metrics.nc").sel(field="10m_wind_speed")
-    r = xr.open_dataset(f"{DATA}/gfs_vs_hrrr.roughness.nc")
+def load(ds=DEFAULT):
+    m = xr.open_dataset(ds["metrics"]).sel(field="10m_wind_speed")
+    r = xr.open_dataset(ROUGHNESS)
     lon = ((r["rough_diff"]["longitude"].values + 180) % 360) - 180
     lat = r["rough_diff"]["latitude"].values
     return m, r, lon, lat
@@ -64,23 +61,27 @@ def loghist_panel(ax, x, y, xlabel, ylabel):
     ax.legend(loc="best", fontsize=8, framealpha=0.75)
 
 
-def relation_figure(m, r):
+def relation_figure(m, r, ds):
+    alab, diff = ds["a_label"], ds["diff"]
     rd = r["rough_diff"].values
+    bias = m["bias"].values
+    g = np.isfinite(rd) & np.isfinite(bias)
     fig, axes = plt.subplots(1, 2, figsize=(13, 5), constrained_layout=True)
-    loghist_panel(axes[0], rd, m["bias"].values,
+    loghist_panel(axes[0], rd, bias,
                   "log10(z0 HRRR / z0 GFS)   (>0 = HRRR rougher)",
                   "10 m wind bias [m/s]")
-    axes[0].set_title("HRRR rougher -> HRRR slower (negative bias)", fontsize=10)
+    axes[0].set_title(f"HRRR rougher -> {alab} slower (negative bias)", fontsize=10)
     loghist_panel(axes[1], np.abs(rd), m["var_diff"].values,
-                  "|log10(z0 HRRR / z0 GFS)|", "10 m wind var(HRRR-GFS) [m/s$^2$]")
-    fig.suptitle("10 m wind difference vs surface-roughness difference "
-                 f"(n={np.isfinite(rd).sum()} stations)", fontsize=13)
-    out = "roughness_relation_gfs_vs_hrrr.png"
+                  "|log10(z0 HRRR / z0 GFS)|", f"10 m wind var({diff}) [m/s$^2$]")
+    fig.suptitle(f"10 m wind {diff} {ds['kind']} vs surface-roughness difference "
+                 f"(n={int(g.sum())} stations)", fontsize=13)
+    out = f"roughness_relation_{ds['tag']}.png"
     fig.savefig(out, dpi=130)
     print(f"Wrote {out}")
 
 
-def maps_figure(m, r, lon, lat):
+def maps_figure(m, r, lon, lat, ds):
+    alab, diff = ds["a_label"], ds["diff"]
     rd = r["rough_diff"].values
     bias = m["bias"].values
     # Single OLS roughness fit, same construction as the 2 m T lapse-removal panel.
@@ -104,17 +105,17 @@ def maps_figure(m, r, lon, lat):
                 "log10(z0_hrrr/z0_gfs)  (blue = HRRR rougher)", fmt="%.2f")
     b_lim = np.nanpercentile(np.abs(bias), 98)
     scatter_map(axes[1], lon, lat, bias, b_lim, "RdBu_r",
-                "HRRR - GFS 10 m wind bias",
-                "wind bias [m/s]  (blue = HRRR slower)", fmt="%.1f")
+                f"{diff} 10 m wind bias",
+                f"wind bias [m/s]  (blue = {alab} slower)", fmt="%.1f")
     scatter_map(axes[2], lon, lat, resid, b_lim, "RdBu_r",
                 f"residual after roughness removal\n"
                 f"(slope {fit.slope:+.2f} m/s per log10 z0; "
                 f"{var_expl*100:.0f}% of bias variance removed)",
                 "residual wind bias [m/s]", fmt="%.1f")
-    fig.suptitle("Where HRRR is rougher than GFS, its 10 m wind is slower "
-                 f"(n={int(g.sum())} stations, HRRR - GFS; matched blue)",
+    fig.suptitle(f"Where HRRR is rougher than GFS, {alab}'s 10 m wind is slower "
+                 f"(n={int(g.sum())} stations, {diff}; matched blue)",
                  fontsize=13)
-    out = "roughness_maps_gfs_vs_hrrr.png"
+    out = f"roughness_maps_{ds['tag']}.png"
     fig.savefig(out, dpi=130)
     print(f"Wrote {out}")
     print(f"roughness slope {fit.slope:+.3f} m/s per log10 z0, r={fit.rvalue:+.2f}; "
@@ -122,11 +123,11 @@ def maps_figure(m, r, lon, lat):
           f"({var_expl*100:.0f}% of variance removed)")
 
 
-def main():
-    m, r, lon, lat = load()
-    relation_figure(m, r)
-    maps_figure(m, r, lon, lat)
+def main(ds=DEFAULT):
+    m, r, lon, lat = load(ds)
+    relation_figure(m, r, ds)
+    maps_figure(m, r, lon, lat, ds)
 
 
 if __name__ == "__main__":
-    main()
+    main(parse_dataset(__doc__))

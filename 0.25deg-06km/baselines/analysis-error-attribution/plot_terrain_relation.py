@@ -21,8 +21,6 @@ and an OLS fit with Pearson r and (sign-free) Spearman rho annotated.
 
 Output: terrain_relation_gfs_vs_hrrr.png
 """
-import os
-
 import numpy as np
 import xarray as xr
 import pandas as pd
@@ -30,8 +28,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 
-DATA = f"{os.environ['SCRATCH']}/nested-eagle/0.25deg-06km/production/gfs-vs-hrrr"
-OUT = "terrain_relation_gfs_vs_hrrr.png"
+from datasets import parse_dataset, DEFAULT, TOPO
 
 # field -> (short label, unit, average-atmosphere reference lapse rate K/km or None)
 FIELDS = {
@@ -43,10 +40,10 @@ FIELDS = {
 LAPSE_REF = 6.5
 
 
-def load_frame():
+def load_frame(ds=DEFAULT):
     """One tidy DataFrame: per-station metrics + terrain diffs (m, m/km)."""
-    m = xr.open_dataset(f"{DATA}/gfs_vs_hrrr.metrics.nc")
-    t = xr.open_dataset(f"{DATA}/gfs_vs_hrrr.topo.nc")
+    m = xr.open_dataset(ds["metrics"])
+    t = xr.open_dataset(TOPO)
     rows = {}
     for f in FIELDS:
         s = m.sel(field=f)
@@ -98,8 +95,8 @@ def panel(ax, df, xcol, ycol, xlabel, ylabel, lapse_ref=False):
     ax.legend(loc="best", fontsize=7, framealpha=0.75)
 
 
-def main():
-    frames = load_frame()
+def main(ds=DEFAULT):
+    frames = load_frame(ds)
     nrow = len(FIELDS)
     fig, axes = plt.subplots(nrow, 4, figsize=(18, 4.2 * nrow),
                              constrained_layout=True)
@@ -118,11 +115,12 @@ def main():
               "|HRRR - GFS elevation| [m]", f"{lab} RMSE [{unit}]")
         panel(axes[i, 3], df_abs, "slope_abs", "rmse",
               "|HRRR - GFS slope| [m/km]", f"{lab} RMSE [{unit}]")
-    fig.suptitle("GFS vs HRRR analysis differences vs terrain representation "
+    fig.suptitle(f"{ds['diff']} {ds['kind']} differences vs terrain representation "
                  f"(n={len(frames['2m_temperature'])} stations, "
-                 "HRRR - GFS)", fontsize=14)
-    fig.savefig(OUT, dpi=130)
-    print(f"Wrote {OUT}")
+                 f"{ds['diff']})", fontsize=14)
+    out = f"terrain_relation_{ds['tag']}.png"
+    fig.savefig(out, dpi=130)
+    print(f"Wrote {out}")
 
     # quick numeric summary to stdout
     print("\nPearson r / Spearman rho:")
@@ -140,4 +138,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(parse_dataset(__doc__))
