@@ -483,7 +483,7 @@ training:
     epoch_increment: 0
     max: 1
   max_epochs: null
-  max_steps: 60000
+  max_steps: 200000
   lr:
     warmup: 1000
     rate: 6.25e-05
