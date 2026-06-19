@@ -1,0 +1,68 @@
+forecast_path: ${SCRATCH}/nested-eagle/0.25deg-06km/production/gfs-hrrr/stage1c/inference-validation
+output_path:   ${PWD}/nested-no-contours
+lead_time: 360
+start_date: 2023-03-09T12
+end_date: 2023-03-10T00
+
+verification_dataset_kwargs:
+  cutout:
+    - dataset: /pscratch/sd/t/timothys/nested-eagle/0.25deg-06km/data/hrrr.zarr
+      trim_edge: [25, 24, 25, 26]
+    - dataset: /pscratch/sd/t/timothys/nested-eagle/0.25deg-06km/data/gfs.zarr
+  adjust: all
+  min_distance_km: 6
+
+model_type: nested
+lam_index: 407040
+lcc_info:
+  n_x: 848
+  n_y: 480
+target_name: "GFS/HRRR fhr00"
+model_name: "Nested-EAGLE 0.25\u00b0/6km"
+vars_of_interest:
+  - 10m_wind_speed
+  - t2m
+
+fig_kwargs:
+  width: 10
+  height: 7
+  projection: Orthographic
+  projection_kwargs:
+    central_longitude: -120
+    central_latitude: 20
+  lam_size: 0.01
+  global_size: 0.25
+  box_kwargs:
+    color: lightgray
+  cartopy_features:
+    coastlines:
+      resolution: "50m"
+      color: darkgray
+      linewidth: 0.3
+    borders:
+      edgecolor: darkgray
+      linewidth: 0.3
+    states:
+      edgecolor: darkgray
+      linewidth: 0.3
+
+#contours:
+#  variable: gh
+#  level: 850
+#  forecast_regrid_kwargs:
+#    target_grid_path: ${SCRATCH}/nested-eagle/0.25deg-06km/mesh-gen/csmswt-trim25/global_quarter_degree_with_mask.nc
+#    regridder_kwargs:
+#      method: conservative_normed
+#      reuse_weights: True
+#      filename: ${SCRATCH}/nested-eagle/0.25deg-06km/mesh-gen/csmswt-trim25/conservative_lam_to_global.nc
+#  levels: 12
+#  colors: white
+#  linewidths: 0.6
+
+per_variable_kwargs:
+  2m_temperature:
+    vmin: -15
+    vmax: 30
+  10m_wind_speed:
+    vmin: 0
+    vmax: 18

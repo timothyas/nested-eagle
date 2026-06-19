@@ -49,7 +49,7 @@ def make_one_legend(fig, axs):
         handles,
         labels,
         loc='lower center',
-        bbox_to_anchor=(0.5, -0.05),
+        bbox_to_anchor=(0.5, -0.075),
         ncols=len(labels),
         frameon=False,
     )
@@ -109,7 +109,7 @@ def plot_surface_vars(
     **kwargs,
 ):
     ncols = len(surface_vars)
-    fig, axs = plt.subplots(1, ncols, figsize=(5.25*ncols, 4.1), constrained_layout=True)
+    fig, axs = plt.subplots(1, ncols, figsize=(5.25*ncols, 3.75), constrained_layout=True)
 
     for varname, ax in zip(surface_vars, axs):
         single_plot(ax=ax, dsdict=dsdict, metric_name=metric_name, varname=varname, **kwargs)
@@ -129,7 +129,7 @@ def plot_level_vars(
     levels = next(iter(dsdict.values())).level.values
     ncols = len(level_vars)
     nrows = len(levels)
-    fig, axs = plt.subplots(nrows, ncols, figsize=(5.25*ncols, 4.5*nrows), constrained_layout=True, sharex=True)
+    fig, axs = plt.subplots(nrows, ncols, figsize=(5.25*ncols, 3.75*nrows), constrained_layout=True, sharex=True)
 
     if ncols == 1:
         axs = [axs]
@@ -155,13 +155,14 @@ def plot_selection(
     metric_name,
     variables=("10m_wind_speed", "2m_temperature", {"geopotential_height": 500}, {"temperature": 850}, {"wind_speed": 250}),
     one_legend=True,
+    nrows=1,
     **kwargs,
 ):
-    ncols = len(variables)
-    fig, axs = plt.subplots(1, ncols, figsize=(5.25*ncols, 4.1), constrained_layout=True)
+    ncols = len(variables) // nrows
+    fig, axs = plt.subplots(nrows, ncols, figsize=(5.25*ncols, 3.75*nrows), constrained_layout=True, sharex=True)
 
     sel = kwargs.pop("sel", {})
-    for variable, ax in zip(variables, axs):
+    for variable, ax in zip(variables, axs if nrows == 1 else axs.flatten()):
         if isinstance(variable, str):
             varname = variable
             sel = None
@@ -172,6 +173,12 @@ def plot_selection(
             raise TypeError
 
         single_plot(ax=ax, dsdict=dsdict, metric_name=metric_name, varname=varname, sel=sel, **kwargs)
+        if nrows > 1:
+            ax.set(title="")
+            label = f"{nice_names(varname)}  ({get_units(varname)})"
+            if sel is not None:
+                label = f"{sel['level']} hPa "+label
+            ax.text(0.06, 0.9, label, transform=ax.transAxes)
 
     if one_legend:
         make_one_legend(fig, axs)

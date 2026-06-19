@@ -1,0 +1,43 @@
+forecast_path: ${SCRATCH}/nested-eagle/0.25deg-06km/baselines/hrrr-forecasts-vs-hrrr-analysis/hrrr.forecasts.zarr
+output_path:   ${PWD}/hrrr-no-contours
+from_anemoi: false
+lead_time: 48
+start_date: 2023-03-09T12
+end_date: 2023-03-09T12
+
+verification_dataset_kwargs:
+  dataset: /pscratch/sd/t/timothys/nested-eagle/0.25deg-06km/data/hrrr.zarr
+
+model_type: lam
+lcc_info:
+  n_x: 899
+  n_y: 529
+target_name: "HRRR 6km fhr00"
+model_name: "HRRR 6km"
+vars_of_interest:
+  - t2m
+  - 10m_wind_speed
+
+levels:
+  - 500
+  - 850
+
+fig_kwargs:
+  width: 10
+  height: 7
+  projection: Orthographic
+  projection_kwargs:
+    central_longitude: -120
+    central_latitude: 20
+  cartopy_features:
+    states:
+      edgecolor: darkgray
+      linewidth: 0.3
+
+per_variable_kwargs:
+  2m_temperature:
+    vmin: -15
+    vmax: 30
+  10m_wind_speed:
+    vmin: 0
+    vmax: 18
