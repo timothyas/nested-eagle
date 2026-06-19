@@ -1,11 +1,16 @@
 """
-2×2 map of 10 m wind speed (cmo.speed colormap) and surface pressure
-(4 hPa contours) comparing Nested-EAGLE (LAM, native grid), Global-EAGLE,
-HRRR, and GFS.
-LambertConformal projection centred on Southern California.
-Western extent matches the HRRR data boundary at SoCal latitudes.
+2×2 map of 10 m wind speed over Southern California for a single valid time,
+comparing Nested-EAGLE (LAM), GFS, HRRR, and Global-EAGLE.
 
-Edit T0 and FHR to change the plotted forecast.
+PlateCarree projection. Each panel shows model 10 m wind speed (cmo.speed_r)
+with light orography contours, overlaid with the case-study observation
+stations (tier-colored, via plot_station_map.draw_stations) and the
+Palisades/Eaton fire ignition points. Panel order matches the time-series
+figure: Nested-EAGLE | GFS / HRRR | Global-EAGLE.
+
+HRRR is only available out to 48 h; longer leads leave that panel empty.
+
+Edit T0 and FHR (or set the MAP_T0 / MAP_FHR env vars) to change the forecast.
 """
 
 import os
@@ -19,25 +24,26 @@ import pandas as pd
 import xarray as xr
 
 from eagle.tools.data import open_anemoi_inference_dataset, open_forecast_zarr_dataset
-from query_obs import STATIONS
+from plot_station_map import draw_stations
 
 SCRATCH = os.environ["SCRATCH"]
 LA_FIRES = os.path.join(SCRATCH, "nested-eagle/case-studies/la-fires")
 
 # ── Parameters ────────────────────────────────────────────────────────────────
-T0  = "2025-01-06T12"
-FHR = 48
+T0  = os.environ.get("MAP_T0", "2025-01-04T12")
+FHR = int(os.environ.get("MAP_FHR", "96"))
 
 VALID_TIME = pd.Timestamp(T0) + pd.Timedelta(hours=FHR)
 SP_LEVELS   = np.arange(972, 1024, 4)          # surface pressure contour levels (hPa)
 WSPD_VMAX   = 10.0                             # m/s, shared colorscale
 OROG_LEVELS = [200, 500, 1000, 1500, 2000, 2500]  # orography contour levels (m)
 
-# SoCal fixed bounds
-_WEST  = -120.5
-_EAST  = -116.0
-_NORTH =   35.8
-_SOUTH =   32.5
+# Map extent — wider than the station map to give the wind field more context
+# (a tight crop makes the coarse GFS/Global-EAGLE cells dominate the panel).
+_WEST  = -119.5
+_EAST  = -117.0
+_NORTH =   34.8
+_SOUTH =   33.3
 
 # ── Data paths ────────────────────────────────────────────────────────────────
 EAGLE_DIR        = os.path.join(LA_FIRES, "nested-eagle")
@@ -107,7 +113,7 @@ def load_gfs() -> xr.Dataset:
 def load_hrrr_orog() -> xr.Dataset:
     ds = open_forecast_zarr_dataset(
         path=HRRR_ZARR,
-        t0=T0,
+        t0="2025-01-07T12",
         vars_of_interest=["orog"],
         load=True,
         reshape_cell_to_2d=True,
@@ -174,11 +180,6 @@ def plot_panel(ax, ds: xr.Dataset, title: str, map_extent: list, ds_orog: xr.Dat
         transform=ccrs.PlateCarree(),
     )
 
-    stn_lats = [m["lat"] for m in STATIONS.values()]
-    stn_lons = [m["lon"] for m in STATIONS.values()]
-    ax.scatter(stn_lons, stn_lats, transform=ccrs.PlateCarree(),
-               s=12, color="white", edgecolors="black", linewidths=0.5, zorder=5)
-
     ax.set_title(title, loc="left", fontsize=10)
 
     return im
@@ -194,11 +195,16 @@ def main():
     print("Loading Global-EAGLE...")
     ds_global = load_global_eagle()
     print("Loading HRRR...")
-    ds_hrrr = load_hrrr()
-    print("Loading GFS...")
-    ds_gfs = load_gfs()
+    try:
+        ds_hrrr = load_hrrr()
+    except:
+        ds_hrrr = None
+        print(" ... can't load HRRR for this t0/fhr combo")
+
     print("Loading HRRR orography...")
     ds_hrrr_orog = load_hrrr_orog()
+    print("Loading GFS...")
+    ds_gfs = load_gfs()
     print("Loading GFS orography...")
     ds_gfs_orog = load_gfs_orog()
 
@@ -212,15 +218,29 @@ def main():
         constrained_layout=True,
     )
 
+    # Panel order matches the time-series figure:
+    # Nested-EAGLE | GFS  /  HRRR | Global-EAGLE
     panels = [
         (axes[0, 0], ds_nested, "Nested-EAGLE", ds_hrrr_orog),
-        (axes[0, 1], ds_global, "Global-EAGLE", ds_gfs_orog),
+        (axes[0, 1], ds_gfs,    "GFS",          ds_gfs_orog),
         (axes[1, 0], ds_hrrr,   "HRRR",         ds_hrrr_orog),
-        (axes[1, 1], ds_gfs,    "GFS",           ds_gfs_orog),
+        (axes[1, 1], ds_global, "Global-EAGLE", ds_gfs_orog),
     ]
 
-    for ax, ds, title, ds_orog in panels:
-        im = plot_panel(ax, ds, title, map_extent, ds_orog)
+    for i, (ax, ds, title, ds_orog) in enumerate(panels):
+        first = (i == 0)
+        if ds is not None:
+            im = plot_panel(ax, ds, title, map_extent, ds_orog)
+        else:
+            ax.set_extent(map_extent, crs=ccrs.PlateCarree())
+            ax.add_feature(cfeature.COASTLINE, lw=0.6, edgecolor="gray")
+            ax.add_feature(cfeature.STATES, lw=0.3, edgecolor="gray")
+            ax.set_title(f"{title} (no data)", loc="left", fontsize=10)
+        # Tier-colored station markers on every panel; labels only on the
+        # first to avoid clutter (positions are identical across panels).
+        draw_stations(ax, label=first, fires=True, fire_label=first, fontsize=6.5)
+
+    axes[0, 0].legend(loc="lower left", fontsize=6.5, framealpha=0.9)
 
     cbar = fig.colorbar(im, ax=axes, orientation="horizontal", fraction=0.05,
                         pad=0.04, aspect=50, extend="max", shrink=0.8)

@@ -23,22 +23,32 @@ from nnja_ai import DataCatalog
 DATASET_ID = "conv-adpsfc-NC000007"
 
 # ── Target ASOS stations ──────────────────────────────────────────────
-# Tier A: Pass / foothill stations (strong Santa Ana signal)
-# Tier B: Coastal / valley contrast stations (weaker signal)
+# Tiers are defined empirically by the peak 3 h-centered-mean sustained wind
+# observed during the event (Jan 6–11 2025), NOT by a priori geography:
+#   Tier A  — saw the strong Santa Ana : peak 3 h-mean >= 12 m/s (red-flag level)
+#   Tier B  — control, did not         : peak 3 h-mean <  8 m/s
+#   "drop"  — ambiguous middle (8–12 m/s), out-of-regime, or poor obs;
+#             retained for reference/querying but excluded from the A/B contrast.
+# The set is also restricted to the San Gabriel / San Fernando foothill regime
+# near the Palisades & Eaton fires (far-field high-desert / Cajon / OC sites,
+# even when strong, are a different wind regime and are excluded).
 STATIONS = {
-    # Tier A — Pass / Foothill / inland valley
-    "KVNY": {"name": "Van Nuys",                "lat": 34.210, "lon": -118.490, "tier": "A"},
-    "KBUR": {"name": "Burbank/Glendale",        "lat": 34.201, "lon": -118.359, "tier": "A"},
-    "KEMT": {"name": "El Monte",                "lat": 34.086, "lon": -118.035, "tier": "A"},
-    "KPOC": {"name": "Brackett Field/La Verne", "lat": 34.092, "lon": -117.782, "tier": "A"},
-    "KONT": {"name": "Ontario Intl",            "lat": 34.056, "lon": -117.601, "tier": "A"},
-    # Tier A — Mountain
-    "KMWS": {"name": "Mt. Wilson",               "lat": 34.220, "lon": -118.070, "tier": "A"},
-    # Tier B — Coastal
-    "KLAX": {"name": "Los Angeles Intl",        "lat": 33.943, "lon": -118.408, "tier": "B"},
-    "KHHR": {"name": "Hawthorne Muni",          "lat": 33.923, "lon": -118.335, "tier": "B"},
-    "KTOA": {"name": "Torrance Muni",           "lat": 33.803, "lon": -118.340, "tier": "B"},
-    "KLGB": {"name": "Long Beach",              "lat": 33.818, "lon": -118.152, "tier": "B"},
+    # ── Tier A — strong signal (peak 3 h-mean >= 12 m/s) ──────────────────
+    "KWHP": {"name": "Whiteman/Pacoima",        "lat": 34.259, "lon": -118.413, "tier": "A"},  # 18.0 m/s
+    "KBUR": {"name": "Burbank/Glendale",        "lat": 34.201, "lon": -118.359, "tier": "A"},  # 15.6 m/s
+    "KVNY": {"name": "Van Nuys",                "lat": 34.210, "lon": -118.490, "tier": "A"},  # 14.0 m/s
+
+    # ── Tier B — control, did not see the Santa Ana (peak 3 h-mean < 8 m/s) ─
+    "KPOC": {"name": "Brackett Field/La Verne", "lat": 34.092, "lon": -117.782, "tier": "B"},  # 7.5 m/s, foothill that stayed weak
+    "KHHR": {"name": "Hawthorne Muni",          "lat": 33.923, "lon": -118.335, "tier": "B"},  # 5.9 m/s, coastal
+    "KTOA": {"name": "Torrance Muni",           "lat": 33.803, "lon": -118.340, "tier": "B"},  # 4.8 m/s, coastal
+
+    # ── Dropped — kept for reference, excluded from the A/B contrast ───────
+    "KONT": {"name": "Ontario Intl",            "lat": 34.056, "lon": -117.601, "tier": "drop"},  # 15.8, Cajon corridor (different regime)
+    "KLAX": {"name": "Los Angeles Intl",        "lat": 33.943, "lon": -118.408, "tier": "drop"},  # 11.2, too strong for a control
+    "KLGB": {"name": "Long Beach",              "lat": 33.818, "lon": -118.152, "tier": "drop"},  # 9.3, ambiguous middle
+    "KEMT": {"name": "El Monte",                "lat": 34.086, "lon": -118.035, "tier": "drop"},  # 9.0, ambiguous middle
+    "KMWS": {"name": "Mt. Wilson",               "lat": 34.220, "lon": -118.070, "tier": "drop"},  # 4.1, sheltered/unrepresentative mtn obs
 }
 
 # ── SoCal bounding box for broader spatial queries ────────────────────
@@ -55,10 +65,11 @@ DATE_START = "2025-01-03"
 DATE_END = "2025-01-12"
 
 # ── Wind speed thresholds for onset detection (m/s) ───────────────────
+# NWS land wind-warning criteria (sustained wind; the model has no gusts).
+# Wind Advisory: sustained 31 mph (≥1 h); High Wind Warning: sustained 40 mph.
 THRESHOLDS_MS = {
-    "red_flag": 12.0,       # ~27 mph, Red Flag Warning level
-    "wind_advisory": 15.0,  # ~34 mph, Wind Advisory level
-    "high_wind": 18.0,      # ~40 mph, High Wind Warning level
+    "wind_advisory": 13.9,  # 31 mph — NWS Wind Advisory onset (land)
+    "high_wind": 17.9,      # 40 mph — NWS High Wind Warning (land)
 }
 
 # ── NNJA variables to request, and the friendly column names we expose ─
