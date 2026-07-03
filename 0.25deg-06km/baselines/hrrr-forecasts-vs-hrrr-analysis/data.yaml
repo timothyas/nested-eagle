@@ -33,6 +33,9 @@ source:
     - sh2
     # extra
     - mslma
+    # static
+    - lsm
+    - orog
 
   levels:
     - 100

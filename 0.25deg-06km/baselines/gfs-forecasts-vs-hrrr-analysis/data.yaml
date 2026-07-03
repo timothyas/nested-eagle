@@ -31,6 +31,9 @@ source:
     - v10
     - t2m
     - sh2
+    # static
+    - lsm
+    - orog
 
   levels:
     - 100
