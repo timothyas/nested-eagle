@@ -1,0 +1,43 @@
+forecast1:
+  path: ${SCRATCH}/nested-eagle/0.25deg-06km/production/gfs-hrrr/stage1c/inference-testing
+  from_anemoi: true
+  model_type: nested-lam
+  lam_index: 407040
+  lcc_info:
+    n_x: 848
+    n_y: 480
+
+forecast2:
+  path: ${SCRATCH}/nested-eagle/0.25deg-06km/production/gfs-hrrr/stage1c/inference-testing-fakehrrr
+  from_anemoi: true
+  model_type: nested-lam
+  lam_index: 407040
+  lcc_info:
+    n_x: 848
+    n_y: 480
+
+output_path: ${SCRATCH}/nested-eagle/0.25deg-06km/production/gfs-hrrr/stage1c/inference-testing/spatial-metrics-vs-fakehrrr
+lead_time: 360
+keep_t0: false
+use_mpi: true
+
+# Bias/variance decomposition of the fc1-fc2 difference. Stores a per-IC
+# signed-difference zarr (truncated to the first max_fhr of lead time) for
+# after-the-fact diurnal/seasonal attribution, plus global bias/variance/rmse
+# maps. Analyze with eagle.tools.spatial_forecast.decompose_from_zarr(...).
+decompose:
+  enabled: true
+  max_fhr: 48
+  # zarr_path: defaults to <output_path>/diff.perIC.fc1vfc2.zarr
+
+vars_of_interest:
+  - sp
+  - u10
+  - v10
+  - t2m
+  - sh2
+  - 10m_wind_speed
+
+start_date: 2024-02-01T06
+end_date: 2025-01-31T18
+freq: 30h
