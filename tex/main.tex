@@ -1,24 +1,20 @@
 \documentclass[11pt]{article}
 \usepackage{preprint}
 
-% ----------------------------------------------------------------
-%  Optional: override accent colour before \begin{document}
-  \definecolor{accent}{HTML}{004074}   % AGU navy
-% ----------------------------------------------------------------
-
-% Short title shown in running headers
-\shorttitle{Nested-EAGLE}
-
-% Math & notation packages (add your own)
-% Note: amssymb is already loaded by preprint.sty
 \usepackage{amsmath, bm}
-\usepackage{mathtools}   % for \coloneqq, etc.
-
-% Cross-references (optional but recommended)
+\usepackage{mathtools}   % for \coloneqq
+\usepackage{amssymb} % in preprint.sty
 \usepackage[capitalise, noabbrev]{cleveref}
-
-% Graphics
 \usepackage{graphicx}
+
+% todo stuff
+\usepackage{soul}
+\usepackage{todonotes}
+\newcommand{\hlfix}[2]{\texthl{#1}\todo{#2}}
+
+% Colors
+\definecolor{accent}{HTML}{004074}   % AGU navy
+\newcommand{\red}[1]{\textcolor{red}{#1}}
 
 % References
 \usepackage[authoryear, round]{natbib}
@@ -27,6 +23,7 @@
 % ================================================================
 %  Title block metadata
 % ================================================================
+\shorttitle{Nested-EAGLE}
 \title{Nested-EAGLE: A Data Driven Global Weather Model with High
 Resolution over the Contiguous\\United States}
 
@@ -90,80 +87,145 @@ Resolution over the Contiguous\\United States}
 
 \section{Introduction}
 
-The introduction motivates the problem and situates the work within
-the existing literature \citep{nipen_regional_2026}. Begin by describing the
-broad scientific context, then narrow to the specific gap this paper
-addresses. Conclude with a brief outline of the paper's structure.
+% NOAA prediction suite
+The National Oceanic and Atmospheric Administration (NOAA) regularly broadcasts
+weather and climate forecasts to the public for a variety of applications,
+for example
+severe thunderstorms,
+hurricanes,
+10 day weather,
+and seasonal outlooks of temperature and precipitation.
+While significant effort has developed a unified modeling framework
+from which prediction systems can be developed \citep{jacobs_open_2021},
+there is no ``single'' forecast system at NOAA.
+Rather, there are many distinct forecasting systems made up of model and data
+assimilation frameworks tuned to the application at hand.
+While some separation is both practical and necessary,
+e.g., it does not make sense to run a moving nest hurricane model outside of
+hurricane season,
+forecasters could benefit from a single prediction system that could reliably
+simulate across multiple scales, rather than collect results from numerous
+systems.
 
-Body text is set in 11\,pt XCharter, a beautiful humanist serif
-designed by Michael Sharpe. Inline math uses the matching
-\texttt{newtxmath} fonts: $f(\mathbf{x}) = \bm{\theta}^\top \mathbf{x}
-+ b$. Emphasis appears in \textit{italics} and strong emphasis in
-\textbf{bold}.
+% Hone in on SRW and MRW
+We are specifically focused on jointly predicting short range weather,
+spanning hours to a few days,
+and medium range weather, which generally extends to about two weeks.
+At NOAA, short range weather is currently captured by the High Resolution Rapid Refresh
+(HRRR): a limited area model (LAM) covering the Contiguous United States (CONUS)
+that provides forecasts every hour out to 18~hours at 3~km spatial resolution
+\citep{dowell_high-resolution_2022}.
+On the other hand, medium range weather is provided by NOAA's Global Forecast
+System (GFS) and Global Ensemble Forecast System (GEFS) for deterministic and
+stochastic predictions, initialized every 6~hours and released at 0.25$\circ$
+(operating at 13~km as of v16) \citep{noaa_emc_nfs}.
+\hlfix{
+    Traditional approaches to combining these systems would involve the development
+of a single physical simulator, with a nested or refined high resolution mesh
+over CONUS.
+However, approaches like this are extremely challenging demanding, as there are
+$\mathcal{O}(10^8)$ degrees of freedom and the system is
+bottlenecked by the Courant-Friedrichs-Lewy condition.
+}{bit of a strawman}
+The computational load of traditional systems like this limit its
+practicality, as the compute time can take longer than the horizon for which the
+short range forecast is useful.
 
-\section{Methods}
+% ML offers the opportunity to do this
+Developments in machine learning weather prediction (MLWP)
+offer an alternative approach to the problem.
+In recent years, a number of MLWP models trained on the
+ERA5 \citep{hersbach_era5_2020}
+have been developed that are competitive with the gold
+standard in medium range weather:
+the deterministic IFS HRES \red{CITE HRES} and stochastic IFS ENS
+\red{CITE ENS} see
+\citep{bi_accurate_2023,lam_learning_2023,chen_fuxi_2023,chen_operational_2025,bodnar_foundation_2025,lang_aifs_2024,sadeghi_tabas_gfs-powered_2025}.
+Since the development of global, medium range MLWP models, regional weather
+emulators have taken off
+\citep[e.g.,][]{adamov_building_2025,flora_wofscast_2025,abdi_hrrrcast_2026}.
+Notably, \citet{nipen_regional_2026} develop an ``all-in-one'' MLWP model
+that has high (2.5~km) resolution over Scandinavia, but still captures the rest
+of the globe at $0.25^\circ$.
+After a pretraining phase on ERA5 data,
+the model is trained on a combination of data from the LAM and global forecast
+archives, resulting in state-of-the-art prediction skill out to 2.5~days
+at a fraction of the computational cost compared to the traditional system
+(ignoring training costs).
 
-\subsection{Model Architecture}
+% Now introduce Nested-EAGLE
+Here, we build on the work by \citet{nipen_regional_2026} to develop
+Nested-EAGLE: a MLWP with a high resolution (6~km) mesh over CONUS, nested
+inside a $0.25^{\circ}$ grid.
+Trained on NOAA's HRRR and GFS analysis archives, the model
+achieves state-of-the-art prediction skill over CONUS, gaining approximately
+2~days of skill over the HRRR and GFS forecast systems.
+Aside from distinctly different geographical foci as well as some technical design choices,
+we extend the evaluation protocol considered by \citet{nipen_regional_2026} for a nested or
+``stretched-grid'' model.
+Specifically, our unique contributions are as follows.
+\begin{itemize}
+    \item We evalute the model at both short and medium range timescales, i.e.,
+        out to 15~days.
+    \item We highlight the model's skill outside of CONUS to show that the model
+        remains a competitive medium range weather model, and is not overtrained
+        on our region of choice.
+    \item We compare perturbation experiment results to highlight the state variables
+        that benefit most from combining HRRR and GFS data during training, and
+        isolate the effects of training data. \todo{bias correct..}
+\end{itemize}
+Finally, we highlight the model's current weaknesses in representing
+precipitation due to the known blurring effect of deterministic ML training at
+6~hour timesteps using a mean-squared error loss function
+\citep[e.g., as noted by][]{lam_learning_2023}.
+However, we provide a nuanced view that offers hope for future development.
 
-Subsections carry 11\,pt bold headings. The model is defined by the
-mapping
-\begin{equation}
-    \hat{\mathbf{y}} = g\bigl(f(\mathbf{x};\, \bm{\theta})\bigr),
-    \label{eq:model}
-\end{equation}
-where $f : \mathbb{R}^{n} \to \mathbb{R}^{m}$ is the encoder,
-$g : \mathbb{R}^{m} \to \mathbb{R}^{p}$ is the decoder, and
-$\bm{\theta}$ collects all learnable parameters. We refer to
-\cref{eq:model} throughout.
+\section{Prognostic Forecast Skill}
 
-\subsection{Training Objective}
+We evaluate the performance of Nested-EAGLE over the test period, February 2024
+-- January 2025, comparing against the traditional physics based modeling
+frameworks from NOAA: GFS and HRRR.
+In our prognostic skill evaluation,
+e.g., for 2m temperature,
+we compare forecasts initialized every 30~hours, evenly sampling the
+diurnal and seasonal cycles during the period while resulting in 293~samples per
+lead time.
+Forecasts from each model are evaluated in terms of Root Mean Squared Error
+(RMSE) against in situ observations,
+e.g., dropsondes, rawinsondes, aircraft, and station data,
+from the NOAA NASA Joint Archive \citep[NNJA;][]{nnja_obs_data} via Brightband's
+Python API \citep{hans_mohrmann_2025_16749100}.
+We note that conducting the evaluation against observations was critical,
+because the model combines analysis states from both GFS and HRRR.
+Comparing against observations allows us to control for regions in the analyses
+which are unconstrained but different.
+See \red{Supplement} for details, comparing separate evaluations against
+observations and HRRR analysis.
 
-The loss function combines a reconstruction term and a regulariser:
-\begin{equation}
-    \mathcal{L}(\bm{\theta}) =
-        \underbrace{\|\hat{\mathbf{y}} - \mathbf{y}\|^2}_{\text{MSE}}
-        + \lambda \, \|\bm{\theta}\|_2^2 .
-\end{equation}
+\subsection{Forecast Skill Over CONUS}
+\label{subsec:conus_skill}
 
-\subsubsection{Implementation details}
+\cref{fig:lam_rmse} shows RMSE for prognostic variables against observations
+over the CONUS domain, with all models conservatively regridded to a common 6~km
+resolution.
 
-Subsubsection headings are bold-italic at body size. Training uses
-the Adam optimiser with a cosine-decay learning-rate schedule.
-
-\section{Results}
 
 \begin{figure}[t]
     \centering
-    % Replace with your actual figure:
-    \includegraphics[width=\textwidth]{rmse_surface.png}
-    \caption{A descriptive caption that explains what is shown,
-        including the key take-away. The label ``Figure~1.'' is
-        automatically typeset in bold, followed by the body of the
-        caption in regular weight.}
-    \label{fig:main}
+    \includegraphics[width=\textwidth]{figures/lam_rmse.pdf}
+    \label{fig:lam_rmse}
+    \caption{
+        \textbf{
+            RMSE against in situ observations over CONUS from Feb. 2024--Jan. 2025 for select
+            quantities.
+        }
+        Dark solid lines indicate the mean over 293~forecasts initialized every
+        30~hours, and shading indicates the 95\% confidence interval.
+        All datasets are conservatively regridded to the same 6~km resolution
+        grid that Nested-EAGLE employs over CONUS.
+    }
 \end{figure}
 
-%\begin{table}[t]
-%    \centering
-%    \caption{Comparison of model performance across benchmarks.
-%        Best result in each column shown in \textbf{bold}.}
-%    \label{tab:metrics}
-%    \begin{tabular}{lccc}
-%        \toprule
-%        Method          & RMSE $\downarrow$ & ACC $\uparrow$ & CRPS $\downarrow$ \\
-%        \midrule
-%        Baseline A      & 1.42  & 0.81  & 0.63 \\
-%        Baseline B      & 1.38  & 0.83  & 0.61 \\
-%        \textbf{Ours}   & \textbf{1.21}  & \textbf{0.87}  & \textbf{0.54} \\
-%        \bottomrule
-%    \end{tabular}
-%\end{table}
-
-\section{Discussion}
-
-\section{Conclusion}
-
-\section*{Acknowledgements}
 
 % ----------------------------------------------------------------
 %  References  (compile with bibtex or biber)
