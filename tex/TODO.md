@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] Add the "Nested method" figure
 - [ ] New name for the single resolution ML baseline
 - [ ] Rename the swapped runs, this is ridiculous
 - [ ] one or two dashes
