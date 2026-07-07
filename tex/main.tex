@@ -103,8 +103,8 @@ assimilation frameworks tuned to the application at hand.
 While some separation is both practical and necessary,
 e.g., it does not make sense to run a moving nest hurricane model outside of
 hurricane season,
-forecasters could benefit from a single prediction system that could reliably
-simulate across multiple scales, rather than collect results from numerous
+forecasters could benefit from a single prediction system that reliably
+simulates across multiple scales, and obviates the need to collect results from numerous
 systems.
 
 % Hone in on SRW and MRW
@@ -117,7 +117,7 @@ that provides forecasts every hour out to 18~hours at 3~km spatial resolution
 \citep{dowell_high-resolution_2022}.
 On the other hand, medium range weather is provided by NOAA's Global Forecast
 System (GFS) and Global Ensemble Forecast System (GEFS) for deterministic and
-stochastic predictions, initialized every 6~hours and released at 0.25$\circ$
+stochastic predictions, initialized every 6~hours and released at 0.25$^\circ$
 (operating at 13~km as of v16) \citep{noaa_emc_nfs}.
 \hlfix{
     Traditional approaches to combining these systems would involve the development
@@ -157,7 +157,7 @@ at a fraction of the computational cost compared to the traditional system
 Here, we build on the work by \citet{nipen_regional_2026} to develop
 Nested-EAGLE: a MLWP with a high resolution (6~km) mesh over CONUS, nested
 inside a $0.25^{\circ}$ grid.
-Trained on NOAA's HRRR and GFS analysis archives, the model
+Trained on NOAA's HRRR and GFS analysis\todo{define DA analysis} archives, the model
 achieves state-of-the-art prediction skill over CONUS, gaining approximately
 2~days of skill over the HRRR and GFS forecast systems.
 Aside from distinctly different geographical foci as well as some technical design choices,
@@ -173,6 +173,10 @@ Specifically, our unique contributions are as follows.
     \item We compare perturbation experiment results to highlight the state variables
         that benefit most from combining HRRR and GFS data during training, and
         isolate the effects of training data. \todo{bias correct..}
+    \item To facilitate all of these comparisons and highlight the benefit of
+        incorporating HRRR data into Nested-EAGLE, we include comparisons to a single
+        resolution (0.25$^\circ$) baseline model trained on GFS analysis data
+        only, but using otherwise a mirrored model architecture.
 \end{itemize}
 Finally, we highlight the model's current weaknesses in representing
 precipitation due to the known blurring effect of deterministic ML training at
@@ -181,13 +185,14 @@ precipitation due to the known blurring effect of deterministic ML training at
 However, we provide a nuanced view that offers hope for future development.
 
 \section{Prognostic Forecast Skill}
+\label{sec:prognostic_skill}
 
 We evaluate the performance of Nested-EAGLE over the test period, February 2024
--- January 2025, comparing against the traditional physics based modeling
+-- January 2025 by comparing its forecast skill against the relevant physics based modeling
 frameworks from NOAA: GFS and HRRR.
 In our prognostic skill evaluation,
 e.g., for 2m temperature,
-we compare forecasts initialized every 30~hours, evenly sampling the
+we compare 15~day forecasts initialized every 30~hours, evenly sampling the
 diurnal and seasonal cycles during the period while resulting in 293~samples per
 lead time.
 Forecasts from each model are evaluated in terms of Root Mean Squared Error
@@ -198,22 +203,16 @@ Python API \citep{hans_mohrmann_2025_16749100}.
 We note that conducting the evaluation against observations was critical,
 because the model combines analysis states from both GFS and HRRR.
 Comparing against observations allows us to control for regions in the analyses
-which are unconstrained but different.
+which are different from each other, but unconstrained by data.
 See \red{Supplement} for details, comparing separate evaluations against
 observations and HRRR analysis.
 
 \subsection{Forecast Skill Over CONUS}
 \label{subsec:conus_skill}
 
-\cref{fig:lam_rmse} shows RMSE for prognostic variables against observations
-over the CONUS domain, with all models conservatively regridded to a common 6~km
-resolution.
-
-
 \begin{figure}[t]
     \centering
     \includegraphics[width=\textwidth]{figures/lam_rmse.pdf}
-    \label{fig:lam_rmse}
     \caption{
         \textbf{
             RMSE against in situ observations over CONUS from Feb. 2024--Jan. 2025 for select
@@ -224,11 +223,240 @@ resolution.
         All datasets are conservatively regridded to the same 6~km resolution
         grid that Nested-EAGLE employs over CONUS.
     }
+    \label{fig:lam_rmse}
+\end{figure}
+
+\cref{fig:lam_rmse} shows that Nested-EAGLE generally has the lowest mean error over
+CONUS, especially for near surface quantities, and remains competitive
+throughout the atmosphere to 15~days.
+More specifically, \cref{fig:lam_rmse} shows RMSE for Nested-EAGLE, HRRR, and
+GFS for the longest lead time available from each forecast model.
+The top row shows a selection of near surface variables, for which Nested-EAGLE
+maintains a \red{roughly two day} lead in skill.
+This skill gap closes at roughly 5-7~days for 2m~temperature and
+2m~specific humidity, at which point the mean error from Nested-EAGLE is
+statistically indistinguishable from GFS, assuming a 95\% confidence interval.
+The bottom row of \cref{fig:lam_rmse} shows RMSE for a selection of fields
+indicating skill across the atmospheric column.
+At 850~hPa, Nested-EAGLE maintains a statistically significant
+$\sim$1~day\todo{check this}
+lead in temperature skill over HRRR and GFS, although this is relatively muted compared to
+the near surface variables.
+Higher up into the atmosphere, for example as shown by 500~hPa geopotential
+height and 250~hPa wind speed errors, Nested-EAGLE and GFS show essentially the
+same skill.
+
+The reason that Nested-EAGLE leads in surface quantities, but only remains
+competitive in the upper atmosphere is purely due to differences between the
+HRRR and GFS analysis states, i.e., the state at forecast hour 0.
+For near surface variables, HRRR analysis leads the GFS analysis by a
+significant margin: approximately 0.75~m~s$^{-1}$\todo{check} \red{convert to
+percentage}.
+We presume that these near surface improvements are due to several factors in
+the HRRR data assimilation system, including:
+(1) higher spatial resolution,
+(2) more frequent assimilation cycles (hourly versus 6~hourly),
+(3) a more advanced land model, which can make better use of surface
+observations,
+and (4) better observational coverage, using more US centric station data.
+On the other hand, differences in the atmospheric fields shown in the bottom row
+of \cref{fig:lam_rmse} are between \red{X\%-Y\%}.
+That is, HRRR and GFS have approximately the same atmospheric state, but HRRR
+translates this representation into a better surface state.
+We note that the relative improvements near the surface are not due to scaling
+the loss function to prioritize the surface and deprioritize the atmosphere,
+for example which is used by
+GraphCast \citep{lam_learning_2023} and AIFS \citep{lang_aifs_2024}.
+In fact, we found this scaling to be detrimental to skill across all variables
+\red{Ref Supplement}.
+Thus, Nested-EAGLE's skill gain for near surface quantities is due to the
+propagation of skill gains in the HRRR analysis, indicating the benefit of
+incorporating the data into training.
+
+\subsection{Forecast Skill Over Europe}
+\label{subsec:europe_skill}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/europe_rmse.pdf}
+    \caption{
+        \textbf{
+            RMSE against in situ observations over Europe from Feb. 2024--Jan. 2025 for select
+            quantities.
+        }
+        Dark solid lines indicate the mean over 293~forecasts initialized every
+        30~hours, and shading indicates the 95\% confidence interval.
+        The Europe region is defined as a latitude-longitude box from
+        35$^\circ$N-75$^\circ$N and 25$^\circ$W-65$^\circ$E.
+        All datasets operate on a 0.25$^\circ$ latitude-longitude grid in this
+        region, and no regridding is performed for the evaluation.
+    }
+    \label{fig:europe_rmse}
+\end{figure}
+
+\cref{fig:europe_rmse} shows that outside of the target region, CONUS,
+Nested-EAGLE does not carry over skill learned from the HRRR dataset, but
+still remains a reliable medium range weather model.
+The figure shows RMSE against in situ observations over Europe, comparing
+Nested-EAGLE, GFS, and a single resolution MLWP model baseline that is trained
+on GFS analysis data only.
+Outside of the US, Nested-EAGLE and the ML baseline produce statistically
+identical results.
+
+This result provides a ``gut check'' for Nested-EAGLE.
+While it would be ideal for Nested-EAGLE to carry over skill gains from the HRRR
+dataset to the rest of the globe, the model is trained with a
+supervised learning objective that essentially prohibits it from doing so
+because the target data outside of CONUS is defined by GFS analysis.
+It is therefore reassuring that the model is not overtrained to its target region, and
+remains a reliable global model as well.
+We note that most nested or stretched-grid ML models reweight the loss function
+to give the target region higher priority (Bris: X, West: Y, Paper: Z), whereas
+our tuning indicated a more moderate 10\% to perform best \red{see Supplement}.
+More moderate values could be important for skill outside of the target
+region.\todo{discussion? useful?}
+
+\subsection{Learned Constraints or Errors of the Day?}
+\label{subsec:ic_experiment}
+
+The previous sections show that incorporating HRRR analysis into global MLWP model
+training improves its representation of near surface quantities over CONUS.
+However, a fundamental limitation of Nested-EAGLE, and most of the MLWP models
+from the broader community, is its reliance on an analysis state
+that comes from traditional data assimilation systems.
+% Leave this until discussion time
+%generally provided
+%publicly by operational centers like NOAA or ECMWF.
+In our framework, which nests the HRRR analysis inside of GFS analysis, it is
+not exactly clear \textit{how} the skill gain manifests.
+Are the skill gains in Nested-EAGLE relative to the ML baseline purely due
+to the fact that we feed it
+an improved initial state at inference time, or are the improvements baked into
+the model during training?
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/swapped_ic_rmse.pdf}
+    \caption{
+        \textbf{
+            RMSE over CONUS, similar to \cref{fig:lam_rmse}, but with additional
+            experiments perturbing initial conditions.
+        }
+        The additional purple dashed line shows the RMSE of Nested-EAGLE when it
+        is initialized with GFS data only at inference time.
+        The brown dashed line shows the opposite: the ML baseline, which is
+        only trained on GFS analysis, is fed initial conditions that have HRRR
+        data over CONUS.
+        Dark solid lines indicate the mean over 293~forecasts initialized every
+        30~hours, and shading indicates the 95\% confidence interval.
+        All datasets are conservatively regridded to a 0.25$^\circ$ resolution
+        and evaluated over an approximate CONUS latitude-longitude box from
+        20$^\circ$N-55$^\circ$N and 135$^\circ$W-50$^\circ$W.
+    }
+    \label{fig:ic_experiment}
 \end{figure}
 
 
+\cref{fig:ic_experiment} shows that the improvements are learned during
+training, and carry over even with \red{degraded} initial conditions.
+Similar to the top row of \cref{fig:lam_rmse}, \cref{fig:ic_experiment} shows
+near surface forecast RMSE over CONUS from Nested-EAGLE, GFS, and
+the single resolution ML baseline.
+Additionally, \cref{fig:ic_experiment} shows the skill when Nested-EAGLE is
+initialized with only GFS analysis at inference time (purple dashed line).
+We note that in order to make the Nested-EAGLE mechanics work,
+the GFS state is conservatively interpolated to the 6~km Lambert Conic Conformal
+grid over the HRRR subdomain, and left ``as-is'' over the rest of the globe.
+Conversely, \cref{fig:ic_experiment} also shows the skill when the ML baseline,
+trained only on GFS analysis data, is given HRRR initial conditions at
+inference time (brown dashed line).
+Similarly, for the mechanics to work with the single resolution model,
+the HRRR state is conservatively coarsened to a 0.25$^\circ$ degree
+latitude-longitude projection, and swapped into the global grid as appropriate.
+In \cref{fig:ic_experiment}, models initialized with swapped
+analysis states start with the appropriate errors; for example,
+Nested-EAGLE-Swapped has the same error as GFS at forecast hour 0.
+However, the two swapped models rapidly converge to the
+same error as models that use consistent initial conditions during training and inference.
+For 10~m wind speed, this convergence essentially happens in the first 6~hour
+time step.
+For 2~m temperature, the ML baseline with GFS and HRRR initial conditions
+loses skill almost immediately as well, whereas Nested-EAGLE with GFS-only
+initial conditions takes slightly longer to converge (although still only 24-36~hours).
+The slower convergence appears to be mostly due to orography.
+In addition to swapped model states, Nested-EAGLE-Swapped
+uses GFS orography, and the remaining differences between Nested-EAGLE and
+Nested-EAGLE-Swapped correspond to a lapse rate
+that correlates with elevation errors between GFS and HRRR \red{Supplement}.
+
+
+Visualizing the spatial distribution of errors between Nested-EAGLE and
+its swapped counterpart shows that it has learned to remove errors from the GFS
+analysis.
+That is, \cref{fig:nested_swapics_spatial_rmse}
+shows spatial maps of RMSE between Nested-EAGLE and Nested-EAGLE-Swapped,
+averaged over the forecasts from the test period.
+Within the first 6~hour time step, large errors over the Great Plains and near
+the coastlines are removed.
+By 30~hours into the forecast, the only notable differences between the two
+experiments are in the 2m~temperature field over regions with high elevation,
+where persistent biases remain owing to orographic differences noted earlier.
+However, these differences are small relative to the initial error
+between GFS and HRRR analysis.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/nested_swapics_spatial_rmse.jpeg}
+    \caption{
+        \textbf{
+            Spatial RMSE between Nested-EAGLE and Nested-EAGLE-Swapped, averaged
+            over the 293~forecasts from Feb. 2024-Jan. 2025.
+        }
+        At forecast hour 0 (left column), differences are entirely due to
+        differences in GFS and HRRR analyses.
+        After 6~hours (middle column), the figure shows the difference between Nested-EAGLE with
+        and without HRRR data over CONUS after a single forecast step.
+        By 30~hours (right column), the differences are negligible.
+    }
+    \label{fig:nested_swapics_spatial_rmse}
+\end{figure}
+
+\section{Precipitation Evaluation over CONUS}
+\label{sec:precip}
+
+Similar to the prognostic skill evaluation presented in
+\cref{sec:prognostic_skill}, we evaluate Nested-EAGLE's ability to predict
+precipitation during February 2024--January 2025.
+However, several aspects of the precipitation evaluation are different, due to
+the fundamentally \red{unique requirements of evaluating precip}.
+We compare 1426~forecasts, generated from forecasts initialized every 6~hours
+during the test period.
+Additionally, we use Fractions Skill Score (FSS) to provide a more rigorous
+assessment of precipitation features \red{CITE FSS}.
+Because it is challenging to find high resolution, high quality observational
+estimates of precipitation across the globe, we limit our evaluation to the
+CONUS region, and compute FSS
+using NOAA's Analysis of Records for Calibration
+\citep[AORC;][]{fall_aorc_2023} as a reference.
+All datasets are conservatively regridded to the 6~km resolution of Nested-EAGLE
+over CONUS, and the hourly AORC data is aggregated so that all datasets show
+6~hour accumulations.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/fss_threshold_conus.pdf}
+    \caption{
+        \textbf{
+            FSS against AORC over CONUS during Feb. 2024-Jan. 2025.
+        }
+    }
+    \label{fig:fss_threshold_conus}
+\end{figure}
+
+
+
 % ----------------------------------------------------------------
-%  References  (compile with bibtex or biber)
+%  References
 % ----------------------------------------------------------------
 \bibliography{references}
 
