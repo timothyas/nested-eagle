@@ -31,10 +31,10 @@ Resolution over the Contiguous\\United States}
     Timothy A. Smith\textsuperscript{1,2,*},
     Mariah Pope\textsuperscript{3},
     Sergey Frolov\textsuperscript{1},
-    Brett Basarab\textsuperscript{1, 3},
-    Daniel Abdi\textsuperscript{3, 4},
-    Isidora Jankov\textsuperscript{4},
-    Bo Huang\textsuperscript{1, 3}
+    Brett Basarab\textsuperscript{1, 4},
+    Daniel Abdi\textsuperscript{4, 5},
+    Isidora Jankov\textsuperscript{5},
+    Bo Huang\textsuperscript{1, 4}
 }
 
 \affiliations{%
@@ -42,9 +42,10 @@ Resolution over the Contiguous\\United States}
         Atmospheric Administration (NOAA), Boulder, CO, USA\\
     \textsuperscript{2}Nansen Environmental and Remote Sensing Centre,
         Bergen, Norway\\
-    \textsuperscript{3}Cooperative Institute for Research in Environmental Sciences
+    \textsuperscript{3}Earth Prediction Innovation Center (EPIC)\\
+    \textsuperscript{4}Cooperative Institute for Research in Environmental Sciences
         (CIRES) at the University of Colorado Boulder, Boulder, CO, USA\\
-    \textsuperscript{4}Global Systems Laboratory (GSL), National Oceanic and
+    \textsuperscript{5}Global Systems Laboratory (GSL), National Oceanic and
         Atmospheric Administration (NOAA), Boulder, CO, USA
 }
 \email{timothy.smith@nersc.no}
@@ -180,15 +181,15 @@ Specifically, our unique contributions are as follows.
 \end{itemize}
 Finally, we highlight the model's current weaknesses in representing
 precipitation due to the known blurring effect of deterministic ML training at
-6~hour timesteps using a mean-squared error loss function
+6~hour timesteps using a mean squared error loss function
 \citep[e.g., as noted by][]{lam_learning_2023}.
 However, we provide a nuanced view that offers hope for future development.
 
 \section{Prognostic Forecast Skill}
 \label{sec:prognostic_skill}
 
-We evaluate the performance of Nested-EAGLE over the test period, February 2024
--- January 2025 by comparing its forecast skill against the relevant physics based modeling
+We evaluate the performance of Nested-EAGLE over the test period,
+February 2024--January 2025 by comparing its forecast skill against the relevant physics based modeling
 frameworks from NOAA: GFS and HRRR.
 In our prognostic skill evaluation,
 e.g., for 2m temperature,
@@ -233,7 +234,7 @@ More specifically, \cref{fig:lam_rmse} shows RMSE for Nested-EAGLE, HRRR, and
 GFS for the longest lead time available from each forecast model.
 The top row shows a selection of near surface variables, for which Nested-EAGLE
 maintains a \red{roughly two day} lead in skill.
-This skill gap closes at roughly 5-7~days for 2m~temperature and
+This skill gap closes at roughly 5--7~days for 2m~temperature and
 2m~specific humidity, at which point the mean error from Nested-EAGLE is
 statistically indistinguishable from GFS, assuming a 95\% confidence interval.
 The bottom row of \cref{fig:lam_rmse} shows RMSE for a selection of fields
@@ -260,7 +261,7 @@ the HRRR data assimilation system, including:
 observations,
 and (4) better observational coverage, using more US centric station data.
 On the other hand, differences in the atmospheric fields shown in the bottom row
-of \cref{fig:lam_rmse} are between \red{X\%-Y\%}.
+of \cref{fig:lam_rmse} are between \red{X\%--Y\%}.
 That is, HRRR and GFS have approximately the same atmospheric state, but HRRR
 translates this representation into a better surface state.
 We note that the relative improvements near the surface are not due to scaling
@@ -287,7 +288,7 @@ incorporating the data into training.
         Dark solid lines indicate the mean over 293~forecasts initialized every
         30~hours, and shading indicates the 95\% confidence interval.
         The Europe region is defined as a latitude-longitude box from
-        35$^\circ$N-75$^\circ$N and 25$^\circ$W-65$^\circ$E.
+        35$^\circ$N--75$^\circ$N and 25$^\circ$W--65$^\circ$E.
         All datasets operate on a 0.25$^\circ$ latitude-longitude grid in this
         region, and no regridding is performed for the evaluation.
     }
@@ -312,7 +313,7 @@ It is therefore reassuring that the model is not overtrained to its target regio
 remains a reliable global model as well.
 We note that most nested or stretched-grid ML models reweight the loss function
 to give the target region higher priority (Bris: X, West: Y, Paper: Z), whereas
-our tuning indicated a more moderate 10\% to perform best \red{see Supplement}.
+our tuning indicates a more moderate 10\% works best for our targe region \red{see Supplement}.
 More moderate values could be important for skill outside of the target
 region.\todo{discussion? useful?}
 
@@ -351,7 +352,7 @@ the model during training?
         30~hours, and shading indicates the 95\% confidence interval.
         All datasets are conservatively regridded to a 0.25$^\circ$ resolution
         and evaluated over an approximate CONUS latitude-longitude box from
-        20$^\circ$N-55$^\circ$N and 135$^\circ$W-50$^\circ$W.
+        20$^\circ$N--55$^\circ$N and 135$^\circ$W--50$^\circ$W.
     }
     \label{fig:ic_experiment}
 \end{figure}
@@ -382,7 +383,7 @@ For 10~m wind speed, this convergence essentially happens in the first 6~hour
 time step.
 For 2~m temperature, the ML baseline with GFS and HRRR initial conditions
 loses skill almost immediately as well, whereas Nested-EAGLE with GFS-only
-initial conditions takes slightly longer to converge (although still only 24-36~hours).
+initial conditions takes slightly longer to converge (although still only 24--36~hours).
 The slower convergence appears to be mostly due to orography.
 In addition to swapped model states, Nested-EAGLE-Swapped
 uses GFS orography, and the remaining differences between Nested-EAGLE and
@@ -410,7 +411,7 @@ between GFS and HRRR analysis.
     \caption{
         \textbf{
             Spatial RMSE between Nested-EAGLE and Nested-EAGLE-Swapped, averaged
-            over the 293~forecasts from Feb. 2024-Jan. 2025.
+            over the 293~forecasts from Feb. 2024--Jan. 2025.
         }
         At forecast hour 0 (left column), differences are entirely due to
         differences in GFS and HRRR analyses.
@@ -426,33 +427,221 @@ between GFS and HRRR analysis.
 
 Similar to the prognostic skill evaluation presented in
 \cref{sec:prognostic_skill}, we evaluate Nested-EAGLE's ability to predict
-precipitation during February 2024--January 2025.
-However, several aspects of the precipitation evaluation are different, due to
-the fundamentally \red{unique requirements of evaluating precip}.
-We compare 1426~forecasts, generated from forecasts initialized every 6~hours
-during the test period.
-Additionally, we use Fractions Skill Score (FSS) to provide a more rigorous
-assessment of precipitation features \red{CITE FSS}.
+6~hour accumulations of precipitation as a function of forecast hour
+during February 2024--January 2025.
+However, we employ a different evaluation protocol for precipitation compared to
+the other fields.
+Most importantly, we focus on the Fractions Skill Score
+\citep[FSS;][]{roberts_scale-selective_2008} metric, which emphasizes spatial
+coherency and gives better scores to models that predict precipitation
+fields that ``look like'' observations \red{See supplement/methods}.
+We compare 1426~forecasts from each model,
+generated from forecasts initialized every 6~hours during the test period.
 Because it is challenging to find high resolution, high quality observational
-estimates of precipitation across the globe, we limit our evaluation to the
-CONUS region, and compute FSS
+estimates of precipitation across the globe that provide an independent
+reference, we limit our evaluation to the CONUS region,
 using NOAA's Analysis of Records for Calibration
 \citep[AORC;][]{fall_aorc_2023} as a reference.
 All datasets are conservatively regridded to the 6~km resolution of Nested-EAGLE
-over CONUS, and the hourly AORC data is aggregated so that all datasets show
+over CONUS, such that the total precipitation amounts are preserved.
+Finally, the hourly AORC data is aggregated so that all datasets show
 6~hour accumulations.
 
-\begin{figure}[t]
+\subsection{Precipitation Skill per Amount}
+\label{subsec:fss_threshold}
+
+\begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{figures/fss_threshold_conus.pdf}
+    \includegraphics[width=.6\textwidth]{figures/fss_threshold_conus.pdf}
     \caption{
         \textbf{
-            FSS against AORC over CONUS during Feb. 2024-Jan. 2025.
+            FSS over CONUS during Feb. 2024--Jan. 2025, using AORC as the
+            reference, shown as a function of the threshold quantity.
         }
+        All datasets were conservatively regridded to the same 6~km resolution
+        that Nested-EAGLE uses over CONUS, and the AORC dataset was aggregated
+        from hourly to 6~hourly accumulations.
+        A value of 1 indicates a perfect FSS, i.e., higher is better.
     }
     \label{fig:fss_threshold_conus}
 \end{figure}
 
+\cref{fig:fss_threshold_conus} quantifies the most central limitation of
+Nested-EAGLE: precipitation amplitudes are weak relative to the physical model
+baselines.
+That is, each panel shows how well each model represents a given amount of
+precipitation accumulated over the most recent 6~hours,
+with panels indicating skill at 6~hours and 24~hours of lead time.
+While all models are less skillful at higher thresholds, HRRR is clearly the
+most skillful forecast model at all threshold levels, except for the smallest
+thresholds (1--2 mm$/6$h) where
+Nested-EAGLE has a slight advantage.
+At 6~hours of lead time, Nested-EAGLE FSS is nearly identical to the
+archived 0.25$^\circ$ GFS forecasts, despite operating at 6~km spatial
+resolution.
+FSS from all models degrades with lead time, and this is slightly more dramatic
+for Nested-EAGLE at the 20--60 mm$/6$h range.
+
+The reason Nested-EAGLE produces weak amplitudes relative to its
+resolution is due to its deterministic training with a MSE loss function.
+More specifically, the MSE loss function suffers from the double-penalty effect
+\citep{rossa_overview_2008},
+leading to predictions that blur the small scale features
+\citep[as noted by many, e.g.,][]{lam_learning_2023}.
+The relatively blurred small scales result in diminished local maxima, and
+reduced skill at higher precipitation thresholds.
+
+\subsection{Precipitation Skill per Percentile}
+\label{subsec:fss_percentile}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.6\textwidth]{figures/fss_percentile_conus.pdf}
+    \caption{
+        \textbf{
+            Same FSS scores as \cref{fig:fss_threshold_conus}, except shown as a function
+            of percentile represented by each model.
+        }
+        All datasets were conservatively regridded to the same 6~km resolution
+        that Nested-EAGLE uses over CONUS, and the AORC dataset was aggregated
+        from hourly to 6~hourly accumulations.
+        A value of 1 indicates a perfect FSS, i.e., higher is better.
+    }
+    \label{fig:fss_percentile_conus}
+\end{figure}
+
+Despite the blurring imposed by deterministic training,
+\cref{fig:fss_percentile_conus} shows some nuance in the
+evaluation, indicating that Nested-EAGLE can still represent the location of
+precipitation events well.
+In \cref{fig:fss_percentile_conus}, FSS is shown as a function of the percentile
+that each model is able to represent.
+At 6~hours of lead time, Nested-EAGLE and HRRR are the most skillful,
+with indistinguishable FSS per percentile.
+The fact that the two curves match is reassuring, because the 0--6~hour
+accumulation from HRRR is used as targets for Nested-EAGLE during training.
+All models show degraded FSS with increasing lead time in the percentile view,
+but the rankings change amongst models.
+At 24~hours of lead time, Nested-EAGLE is the most skillful across all
+percentiles, and GFS surpasses HRRR at thresholds below the 80$^\text{th}$ percentile.
+
+We surmise that HRRR's reduced skill, at least when viewed in this percentile
+framing, is due to the challenging nature of capturing the
+location of lower likelihood events at longer lead times with deterministic,
+high resolution physical forecast systems.
+As lead time extends, HRRR departs from the initial condition constraints
+provided by data assimilation, and tends toward the numerical model's attractor,
+which is distinctly different from the observations.
+On the other hand, Nested-EAGLE is trained to produce HRRR's 0--6~hour
+precipitation accumulation at all lead times, which is the 6~hour accumulation
+most constrained by data assimilation.
+While the ML model will tend toward its own attractor, distinct from HRRR's 0--6~hour
+accumulation, it appears to maintain its own
+representation of the lower likelihood events better than the physical models.
+
+\section{Discussion}
+\label{sec:discussion}
+
+Weather forecast accuracy depends upon the ability of numerical weather
+prediction systems to represent dynamics across a wide range of spatiotemporal
+scales.
+While \red{it would be convenient to provide} a single high resolution forecast for
+multiple weeks,
+computational constraints of traditional, physics-based prediction systems
+necessitates providing separate forecasts for distinct spatiotemporal ranges.
+Advances in MLWP provide alternatives which may bend these constraints.
+Toward this end, we presented Nested-EAGLE: a MLWP that seamlessly forecasts short and
+medium range weather over CONUS.
+When compared against in situ observations, the model leads NOAA's current operational
+forecast systems for key quantities like 2m temperature and 10m wind speed
+by roughly \red{2 days} of forecast skill, for at least \red{5 days} of lead.
+We showed that this skill stems from HRRR analysis data, and has the largest
+benefits for near surface quantities.
+However, given that HRRR forecasts only extend to a maximum of 48~hours, Nested-EAGLE
+can be taken as an improvement to \red{the status quo} because it readily extends that
+predictability into the medium range.
+
+Outside of CONUS, we showed that Nested-EAGLE performs similarly to a global
+MLWP model, providing reliable medium range forecast scores.
+While it would be ideal for improvements from the HRRR dataset to allow for
+improved skill elsewhere, the current supervised training regiment essentially
+prohibits this --- Nested-EAGLE can only be as good as the data provided at its
+particular location.
+This evaluation shows that the model is not overfit to its target region, and we
+note relevant ablation experiments which could be useful to other operational
+centers that are now developing nested or ``stretched-grid'' MLWP models.
+More importantly, these tests show the importance of accurate training data
+during supervised learning.
+
+We tested the impact of providing Nested-EAGLE GFS initial conditions only,
+interpolating the data as if it were the 6~km coarsened HRRR analysis used
+normally.
+With these initial conditions, Nested-EAGLE produces forecasts that are nearly
+as accurate as when the typical HRRR/GFS data are used.
+Spatial analysis showed that the model acts as a sort of bias
+corrector, removing errors along the Great Plains and coastlines
+from the GFS initial conditions rapidly.
+Taken together, these experiments confirm that
+Nested-EAGLE's skill is not due to better initial conditions at inference time,
+but rather learned during training time.
+There are several implications from this finding.
+On the one hand, Nested-EAGLE is robust to degraded initial conditions,
+perhaps due to missing observational constraints during the data assimilation
+phase.
+However, these experiments also imply that improved initial conditions, for
+example due to a system upgrade or increased observations, would not immediately
+benefit the model at forecast time.
+Instead, within the framework shown here, improved initial conditions need to be
+incorporated into training for the benefits to be realized by the ML model.
+Thus, our results motivate future work to incorporate observations into the
+model training directly.
+Most immediate work could add observational constraints to the loss
+function, which would sidestep the need to nest or otherwise combine analyses
+based on their skill for a given region.
+More generally though, future work should consider modeling frameworks that
+operate on observational inputs directly in order to more directly respond to
+improved observational constraints.
+New advancements in ``end-to-end'' ML forecasting \citep{pinnington_aifs-dop_2026}
+and ML state estimation \citep{gupta_healda_2026} offer promise for these
+directions.
+
+In a separate analysis of precipitation forecast skill, we showed that
+Nested-EAGLE's representation of precipitation is comparable to GFS, despite
+operating at a higher 6~km resolution.
+The results show a quantification of the blurring effect that a MSE-based loss
+function imparts on MLWP models during training.
+These results motivate future work to improve the spatial representation in the
+model.
+Considering results by
+\citet{lang_aifs-crps_2026,alet_skillful_2025,bonev_fourcastnet_2025},
+we suggest that training a stochastic model with a Continuous Ranked Probability
+Score loss function would be a fruitful direction, for both spatial and more
+explicit uncertainty representation.
+
+Moreover, viewing Nested-EAGLE's precipitation FSS in terms of percentiles
+indicates that the model accurately predicts the position of precipitation
+events, despite blurring the amplitudes.
+This finding is analogous to prior work, showing that deterministic global MLWP
+models accurately capture hurricane storm track, despite underestimating
+intensity \red{CITE HURRICANE}.
+Our hope is that future versions of Nested-EAGLE can improve spatial
+representation, while still maintaining the positional accuracy.
+At longer lead times, Nested-EAGLE is shown to produce the most accurate
+precipitation forecast on a percentile basis.
+Our assumption is that this advantage is due to the fact that Nested-EAGLE is
+trained on HRRR forecasts that are still highly constrained by data
+assimilation.
+If true, \red{this implies} that incorporating observations would lead to even
+better predictions at longer lead times, side stepping the bounds of
+predictability bounds of a forecast model.
+Initial exploration by \red{CITE Met Norway} indicate that this line of work is
+fruitful, but remains an open challenge.
+
+Nested-EAGLE is one of many exploratory MLWP models being tested at NOAA,
+alongside its global \citep{sadeghi_tabas_gfs-powered_2025} and
+LAM \citep{abdi_hrrrcast_2026} counterparts.
+The model is currently producing forecasts for 2026 in a quasi-operational
+environment, with forecasts to be published soon.
 
 
 % ----------------------------------------------------------------
