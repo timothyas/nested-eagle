@@ -1,0 +1,46 @@
+forecast_path: ${SCRATCH}/nested-eagle/0.25deg-06km/production/gfs-only/stage1c/inference-testing
+output_path: ${SCRATCH}/nested-eagle/0.25deg-06km/production/gfs-only/stage1c/inference-testing/obs-metrics-hrrr
+lead_time: 360
+use_mpi: True
+
+model_type: global
+vars_of_interest:
+  - gh
+  - u
+  - v
+  - t
+  - q
+  - sp
+  - u10
+  - v10
+  - t2m
+  - sh2
+  # quantities that obs-metrics can derive
+  - wind_speed
+  - 10m_wind_speed
+
+levels:
+  - 100
+  - 250
+  - 500
+  - 850
+
+temporal_window: 30min
+max_qc_value: 2
+
+forecast_regrid_kwargs:
+  target_grid_path: ${SCRATCH}/nested-eagle/0.25deg-06km/data/hrrr_06km.nc
+  regridder_kwargs:
+    method: conservative
+    reuse_weights: True
+    filename: ${SCRATCH}/nested-eagle/0.25deg-06km/baselines/gfs-forecasts-vs-hrrr-analysis/conservative_weights.nc
+
+trim_forecast_edge: [25, 24, 25, 26]
+lcc_info:
+  n_x: 848
+  n_y: 480
+stack_order: ["y", "x"]
+
+start_date: 2024-02-01T06
+end_date: 2025-01-31T18
+freq: 30h

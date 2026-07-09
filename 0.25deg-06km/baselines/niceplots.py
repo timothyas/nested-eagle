@@ -28,13 +28,13 @@ def get_color(label):
     linestyle = None
     if "Nested" in label:
         color = "C0"
-        if "GFS Only ICs" in label:
+        if "GFS Only ICs" in label or "GFS IC" in label:
             color = "C3"
             linestyle = "--"
-    elif "Global-EAGLE" in label:
+    elif "ML-GFS-Base" in label:
         color = "C5"
-        if "GFS+HRRR ICs" in label:
-            color = "C7"
+        if "GFS+HRRR ICs" in label or "G+H IC" in label:
+            color = "C8"
             linestyle = "--"
     elif "HRRR" in label:
         color = "C1"
@@ -159,7 +159,7 @@ def plot_selection(
     **kwargs,
 ):
     ncols = len(variables) // nrows
-    fig, axs = plt.subplots(nrows, ncols, figsize=(5.25*ncols, 3.75*nrows), constrained_layout=True, sharex=True)
+    fig, axs = plt.subplots(nrows, ncols, figsize=(5.25*ncols, 3.25*nrows), constrained_layout=True, sharex=True)
 
     sel = kwargs.pop("sel", {})
     for variable, ax in zip(variables, axs if nrows == 1 else axs.flatten()):

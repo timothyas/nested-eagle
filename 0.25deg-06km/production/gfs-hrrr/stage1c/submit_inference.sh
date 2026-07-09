@@ -14,3 +14,4 @@
 conda activate eagle
 srun eagle-tools inference inference.validation.yaml
 srun eagle-tools inference inference.testing.yaml
+srun eagle-tools inference inference.precip.testing.yaml
