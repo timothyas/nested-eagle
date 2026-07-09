@@ -6,6 +6,7 @@
 \usepackage{amssymb} % in preprint.sty
 \usepackage[capitalise, noabbrev]{cleveref}
 \usepackage{graphicx}
+\usepackage{wrapfig}
 
 % todo stuff
 \usepackage{soul}
@@ -221,8 +222,9 @@ observations and HRRR analysis.
         }
         Dark solid lines indicate the mean over 293~forecasts initialized every
         30~hours, and shading indicates the 95\% confidence interval.
-        All datasets are conservatively regridded to the same 6~km resolution
-        grid that Nested-EAGLE employs over CONUS.
+        The model forecasts are first conservatively regridded to the same 6~km resolution
+        grid that Nested-EAGLE employs over CONUS, then bilinearly interpolated to the
+        observation locations.
     }
     \label{fig:lam_rmse}
 \end{figure}
@@ -450,6 +452,7 @@ Finally, the hourly AORC data is aggregated so that all datasets show
 \subsection{Precipitation Skill per Amount}
 \label{subsec:fss_threshold}
 
+%\begin{wrapfigure}{r}{0.62\textwidth}
 \begin{figure}
     \centering
     \includegraphics[width=.6\textwidth]{figures/fss_threshold_conus.pdf}
@@ -464,6 +467,7 @@ Finally, the hourly AORC data is aggregated so that all datasets show
         A value of 1 indicates a perfect FSS, i.e., higher is better.
     }
     \label{fig:fss_threshold_conus}
+%\end{wrapfigure}
 \end{figure}
 
 \cref{fig:fss_threshold_conus} quantifies the most central limitation of
@@ -494,6 +498,7 @@ reduced skill at higher precipitation thresholds.
 \subsection{Precipitation Skill per Percentile}
 \label{subsec:fss_percentile}
 
+%\begin{wrapfigure}{r}{.62\textwidth}
 \begin{figure}
     \centering
     \includegraphics[width=.6\textwidth]{figures/fss_percentile_conus.pdf}
@@ -509,6 +514,7 @@ reduced skill at higher precipitation thresholds.
     }
     \label{fig:fss_percentile_conus}
 \end{figure}
+%\end{wrapfigure}
 
 Despite the blurring imposed by deterministic training,
 \cref{fig:fss_percentile_conus} shows some nuance in the
@@ -613,10 +619,11 @@ function imparts on MLWP models during training.
 These results motivate future work to improve the spatial representation in the
 model.
 Considering results by
-\citet{lang_aifs-crps_2026,alet_skillful_2025,bonev_fourcastnet_2025},
+\citet{nordhagen_high-resolution_2025,lang_aifs-crps_2026,alet_skillful_2025,bonev_fourcastnet_2025},
 we suggest that training a stochastic model with a Continuous Ranked Probability
-Score loss function would be a fruitful direction, for both spatial and more
+Score loss function would be a fruitful first step, for both spatial and more
 explicit uncertainty representation.
+\red{CITE Canada? Subich paper?}
 
 Moreover, viewing Nested-EAGLE's precipitation FSS in terms of percentiles
 indicates that the model accurately predicts the position of precipitation
