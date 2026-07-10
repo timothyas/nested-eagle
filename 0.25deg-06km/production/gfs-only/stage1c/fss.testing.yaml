@@ -1,0 +1,39 @@
+forecast_path: ${SCRATCH}/nested-eagle/0.25deg-06km/production/gfs-only/stage1c/inference-precip-testing
+output_path: ${SCRATCH}/nested-eagle/0.25deg-06km/production/gfs-only/stage1c/inference-precip-testing/fss
+lead_time: 48
+use_mpi: True
+
+verification_dataset:
+  path: ${SCRATCH}/nested-eagle/0.25deg-06km/baselines/aorc/aorc.zarr
+  precip_varname: accum_tp
+  mask:
+    path: ${SCRATCH}/nested-eagle/0.25deg-06km/baselines/aorc/mask.nc
+    varname: aorc_mask
+  trim_edge: [25, 24, 25, 26]
+
+forecast_dataset:
+  from_anemoi: true
+  model_type: global
+  precip_varname: accum_tp
+  regrid_kwargs:
+    target_grid_path: ${SCRATCH}/nested-eagle/0.25deg-06km/data/hrrr_06km.nc
+    regridder_kwargs:
+      method: conservative
+      reuse_weights: True
+      filename: ${SCRATCH}/nested-eagle/0.25deg-06km/baselines/gfs-forecasts-vs-hrrr-analysis/conservative_weights.nc
+  trim_after_regrid: [25, 24, 25, 26]
+  lam_index: 407040
+  lcc_info:
+    n_x: 848
+    n_y: 480
+
+forecast_hours: [6, 12, 24, 48]
+
+thresholds: [1, 2, 5, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100]
+percentiles: [5, 10, 25, 50, 75, 90, 95, 99, 99.9]
+radius_km: 25
+grid_spacing_km: 6
+
+start_date: 2024-02-01T06
+end_date: 2025-01-29T18
+freq: 6h
