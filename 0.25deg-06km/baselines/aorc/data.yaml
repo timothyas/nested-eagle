@@ -12,7 +12,7 @@ multisource:
       name: aws_aorc
       time:
         start: 2023-02-01T01
-        end: 2024-01-31T13
+        end: 2025-01-31T13
         freq: 6h
 
       variables:
@@ -22,7 +22,7 @@ multisource:
       name: aws_aorc
       time:
         start: 2023-02-01T02
-        end: 2024-01-31T14
+        end: 2025-01-31T14
         freq: 6h
 
       variables:
@@ -32,7 +32,7 @@ multisource:
       name: aws_aorc
       time:
         start: 2023-02-01T03
-        end: 2024-01-31T15
+        end: 2025-01-31T15
         freq: 6h
 
       variables:
@@ -42,7 +42,7 @@ multisource:
       name: aws_aorc
       time:
         start: 2023-02-01T04
-        end: 2024-01-31T16
+        end: 2025-01-31T16
         freq: 6h
 
       variables:
@@ -52,7 +52,7 @@ multisource:
       name: aws_aorc
       time:
         start: 2023-02-01T05
-        end: 2024-01-31T17
+        end: 2025-01-31T17
         freq: 6h
 
       variables:
@@ -62,7 +62,7 @@ multisource:
       name: aws_aorc
       time:
         start: 2023-02-01T06
-        end: 2024-01-31T18
+        end: 2025-01-31T18
         freq: 6h
 
       variables:

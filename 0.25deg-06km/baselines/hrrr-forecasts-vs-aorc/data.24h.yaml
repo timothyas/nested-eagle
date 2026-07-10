@@ -12,7 +12,7 @@ multisource:
       name: aws_hrrr_archive
       t0:
         start: 2023-02-01T00
-        end: 2024-01-31T12
+        end: 2025-01-31T12
         freq: 6h
       fhr:
         start: 19
@@ -27,7 +27,7 @@ multisource:
       name: aws_hrrr_archive
       t0:
         start: 2023-02-01T00
-        end: 2024-01-31T12
+        end: 2025-01-31T12
         freq: 6h
       fhr:
         start: 20
@@ -42,7 +42,7 @@ multisource:
       name: aws_hrrr_archive
       t0:
         start: 2023-02-01T00
-        end: 2024-01-31T12
+        end: 2025-01-31T12
         freq: 6h
       fhr:
         start: 21
@@ -57,7 +57,7 @@ multisource:
       name: aws_hrrr_archive
       t0:
         start: 2023-02-01T00
-        end: 2024-01-31T12
+        end: 2025-01-31T12
         freq: 6h
       fhr:
         start: 22
@@ -72,7 +72,7 @@ multisource:
       name: aws_hrrr_archive
       t0:
         start: 2023-02-01T00
-        end: 2024-01-31T12
+        end: 2025-01-31T12
         freq: 6h
       fhr:
         start: 23
@@ -87,7 +87,7 @@ multisource:
       name: aws_hrrr_archive
       t0:
         start: 2023-02-01T00
-        end: 2024-01-31T12
+        end: 2025-01-31T12
         freq: 6h
       fhr:
         start: 24
